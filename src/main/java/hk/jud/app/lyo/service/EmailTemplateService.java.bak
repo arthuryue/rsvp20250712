@@ -1,0 +1,107 @@
+package hk.jud.app.lyo.service;
+
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
+import org.springframework.stereotype.Service;
+
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.ArrayList;
+
+@Service
+@RequiredArgsConstructor
+public class EmailTemplateService {
+
+    private final ResourceLoader resourceLoader;
+    @ConfigurationProperties(prefix = "email.templates")
+    
+    @Data
+    @RequiredArgsConstructor
+    public static class EmailTemplate {
+        private final String subject;
+        private final String content;
+        private final Map<String, String> images;
+        private final List<String> attachments;
+    }
+
+    public EmailTemplate getTemplateContent(String type, String emailType, String language, String guestName,
+                                           String rsvpLink, boolean includeNote, String qrCode) {
+        String fileName = String.format("classpath:/templates/emails/%s_%s_%s.html",
+                type.toLowerCase(), emailType.toLowerCase(), language.toLowerCase());
+        String subjectFileName = String.format("classpath:/templates/emails/%s_%s_%s.subject",
+                type.toLowerCase(), emailType.toLowerCase(), language.toLowerCase());
+
+        try {
+            // Load template content
+            Resource resource = resourceLoader.getResource(fileName);
+            if (!resource.exists()) {
+                throw new IllegalArgumentException("Template not found for guest type: " + type +
+                                                   ", emailType: " + emailType + ", language: " + language);
+            }
+            String content = new String(Files.readAllBytes(Paths.get(resource.getURI())));
+            content = content.replace("[GUEST_NAME]", guestName);
+
+            // Handle RSVP link
+            if (emailType.equalsIgnoreCase("INVITATION") && rsvpLink != null && !rsvpLink.isEmpty()) {
+                content = content.replace("[RSVP_LINK]", rsvpLink);
+            } else {
+                content = content.replace("[RSVP_LINK]", "");
+            }
+
+            // Load subject
+            Resource subjectResource = resourceLoader.getResource(subjectFileName);
+            String subject = subjectResource.exists()
+                    ? new String(Files.readAllBytes(Paths.get(subjectResource.getURI()))).trim()
+                    : (emailType.equalsIgnoreCase("INVITATION") ? "Invitation" : "Confirmation");
+
+            // Load images
+            Map<String, String> images = new HashMap<>();
+            if (content.contains("cid:event-logo")) {
+                Resource imageResource = resourceLoader.getResource("classpath:static/images/jud_logo.jpg");
+                if (imageResource.exists()) {
+                    byte[] imageBytes = imageResource.getInputStream().readAllBytes();
+                    String base64Image = Base64.getEncoder().encodeToString(imageBytes);
+                    images.put("image-logo", "data:image/jpeg;base64," + base64Image);
+                    content = content.replace("cid:event-logo", images.get("image-logo"));
+                }
+            }
+
+            // Embed QR code if provided
+            if (qrCode != null && content.contains("cid:qr-code")) {
+                images.put("qr-code", qrCode);
+                content = content.replace("cid:qr-code", qrCode);
+            }
+
+            // Collect attachment filenames based on language
+            List<String> attachmentNames = new ArrayList<>();
+            if (type.equalsIgnoreCase("Senior") && emailType.equalsIgnoreCase("INVITATION")) {
+                String transportFileName = String.format("classpath:static/attachments/transport_arrangement_%s.pdf", language.toLowerCase());
+                Resource transportResource = resourceLoader.getResource(transportFileName);
+                if (transportResource.exists()) {
+                    attachmentNames.add(String.format("transport_arrangement_%s.pdf", language.toLowerCase()));
+                }
+            }
+            if (includeNote || (emailType.equalsIgnoreCase("INVITATION") &&
+                    List.of("General Guest 2", "Temp Guest 2").contains(type))) {
+                String noteFileName = String.format("classpath:static/attachments/note_for_guest_%s.pdf", language.toLowerCase());
+                Resource noteResource = resourceLoader.getResource(noteFileName);
+                if (noteResource.exists()) {
+                    attachmentNames.add(String.format("note_for_guest_%s.pdf", language.toLowerCase()));
+                }
+            }
+
+            return new EmailTemplate(subject, content, images, attachmentNames);
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Error reading template: " + e.getMessage());
+        }
+    }
+}

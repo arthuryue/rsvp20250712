@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Event Management</title>
+    <!-- Bootswatch Flatly Theme -->
+    <link th:href="@{/css/bootstrap.min.css}" rel="stylesheet">
+    <link th:href="@{/css/bootstrap-icons.css}" rel="stylesheet">
+
+
+    <style>
+        .navbar-light .navbar-nav .nav-link.active {
+            font-weight: bold;
+            color: #007bff !important;
+            background-color: #e7f1ff !important;
+            border-radius: 0.25rem;
+            padding: 0.5rem 1rem;
+        }
+        .navbar-light .navbar-nav .nav-link:hover {
+            color: #0056b3 !important;
+        }
+        .navbar-light .navbar-nav .nav-link {
+            transition: color 0.2s, background-color 0.2s;
+        }
+    </style>
+</head>
+<body>
+<div class="container mt-0">
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+    <h2>Event Management</h2>
+    
+    <!-- <a th:href="@{/admin/events/new}" class="btn btn-primary mb-3">Create New Event</a> -->
+
+
+   
+
+    <!-- Event Table -->
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <!--  th>
+                    <a th:href="@{/events(sort=${sortField == 'eventCode' and sortDirection == 'asc' ? 'eventCode,desc' : 'eventCode,asc'}, page=${currentPage}, size=${pageSize}, code=${searchQuery})}">Code</a>
+                    <span th:if="${sortField == 'eventCode' and sortDirection == 'asc'}" class="bi bi-arrow-up"></span>
+                    <span th:if="${sortField == 'eventCode' and sortDirection == 'desc'}" class="bi bi-arrow-down"></span>
+                </th>-->
+                <th>Event Name</th>
+                <!--  th>Event Date</th>
+                <th>Location</th>-->
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="event : ${events}">
+                <!-- <td th:text="${event.eventCode}"></td> -->
+                <td th:text="${event.eventName}"></td>
+                <!--td th:text="${#temporals.format(event.eventDate, 'yyyy-MM-dd HH:mm')}"></td>
+                <td th:text="${event.location}"></td>-->
+                <td>
+                    <a th:href="@{/admin/events/detail/{id}(id=${event.id})}" class="btn btn-sm btn-primary">Invitation</a>
+            
+                </td>
+            </tr>
+            <tr th:if="${events.empty}">
+                <td colspan="5" class="text-center">No events found.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- Pagination -->
+    <nav aria-label="Page navigation" th:if="${totalPages > 1}">
+        <ul class="pagination justify-content-center">
+            <li class="page-item" th:classappend="${currentPage == 0 ? 'disabled' : ''}">
+                <a class="page-link" th:href="@{/events(page=${currentPage - 1}, size=${pageSize}, sort=${sortField + ',' + sortDirection}, code=${searchQuery})}">Previous</a>
+            </li>
+            <li class="page-item" th:each="pageNum : ${#numbers.sequence(0, totalPages - 1)}" 
+                th:classappend="${pageNum == currentPage ? 'active' : ''}">
+                <a class="page-link" th:href="@{/events(page=${pageNum}, size=${pageSize}, sort=${sortField + ',' + sortDirection}, code=${searchQuery})}" th:text="${pageNum + 1}"></a>
+            </li>
+            <li class="page-item" th:classappend="${currentPage == totalPages - 1 ? 'disabled' : ''}">
+                <a class="page-link" th:href="@{/events(page=${currentPage + 1}, size=${pageSize}, sort=${sortField + ',' + sortDirection}, code=${searchQuery})}">Next</a>
+            </li>
+        </ul>
+    </nav>
+
+    <!-- Delete Confirmation Modals -->
+    <div th:each="event : ${events}" 
+         th:id="'deleteModal-' + ${event.id}" 
+         class="modal fade" 
+         tabindex="-1" 
+         aria-labelledby="deleteModalLabel" 
+         aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteModalLabel">Confirm Deletion</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    Are you sure you want to delete event <span th:text="${event.eventName}"></span>? This action cannot be undone.
+                </div>
+                <div class="modal-footer">
+                    <form th:action="@{/events/delete/{id}(id=${event.id})}" method="post">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-danger">Delete</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script th:src="@{/js/bootstrap.bundle.min.js}"></script>
+</body>
+</html>

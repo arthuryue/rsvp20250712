@@ -1,0 +1,56 @@
+email:
+  attachments:
+    senior_council:
+      invitation:
+        en:
+            - LYO2026_Notes_on_Transport_Arrangements_en.pdf
+        tc:
+            - LYO2026_Notes_on_Transport_Arrangements_tc.pdf
+        bi:
+            - LYO2026_Notes_on_Transport_Arrangements_en.pdf
+            - LYO2026_Notes_on_Transport_Arrangements_tc.pdf
+      confirmation:
+        en:
+        tc:
+        bi:
+    general_guest1a:
+      invitation:
+        en:
+            - LYO2026 Important notes for guests - English.pdf
+        tc:
+            - LYO2026 Important notes for guests - Chinese.pdf
+        bi:
+            - LYO2026 Important notes for guests - English.pdf
+            - LYO2026 Important notes for guests - Chinese.pdf
+      confirmation:
+        en:
+        tc:
+        bi:
+    general_guest1b:
+      invitation:
+        en:
+            - LYO2026 Important notes for guests - English.pdf
+        tc:
+            - LYO2026 Important notes for guests - Chinese.pdf
+        bi:
+            - LYO2026 Important notes for guests - English.pdf
+            - LYO2026 Important notes for guests - Chinese.pdf
+
+    general_guest2a:
+      invitation:
+        en:
+            - LYO2026 Important notes for guests - English.pdf
+        tc:
+            - LYO2026 Important notes for guests - Chinese.pdf
+        bi:
+            - LYO2026 Important notes for guests - English.pdf
+            - LYO2026 Important notes for guests - Chinese.pdf
+    general_guest2b:
+      invitation:
+        en:
+            - LYO2026 Important notes for guests - English.pdf
+        tc:
+            - LYO2026 Important notes for guests - Chinese.pdf
+        bi:
+            - LYO2026 Important notes for guests - English.pdf
+            - LYO2026 Important notes for guests - Chinese.pdf

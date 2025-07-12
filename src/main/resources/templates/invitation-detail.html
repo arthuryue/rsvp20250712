@@ -1,0 +1,1419 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<title>Invitation Details</title>
+<script th:src="@{/js/jquery-3.6.0.min.js}"></script>
+<link th:href="@{/css/bootstrap.min.css}" rel="stylesheet">
+<link th:href="@{/css/bootstrap-icons.css}" rel="stylesheet">
+<script th:src="@{/js/bootstrap.bundle.min.js}"></script>
+
+<style>
+.attachment-list {
+	margin-top: 0.5rem;
+}
+
+.attachment-list li {
+	margin: 0.25rem 0;
+}
+
+#emailPreviewIframe {
+	border: 1px solid #dee2e6;
+	width: 100%;
+	height: 600px;
+}
+</style>
+<style>
+.navbar-light .navbar-nav .nav-link.active {
+	font-weight: bold;
+	color: #007bff !important;
+	background-color: #e7f1ff !important;
+	border-radius: 0.25rem;
+	padding: 0.5rem 1rem;
+}
+
+.navbar-light .navbar-nav .nav-link:hover {
+	color: #0056b3 !important;
+}
+
+.navbar-light .navbar-nav .nav-link {
+	transition: color 0.2s, background-color 0.2s;
+}
+
+.card {
+	margin-bottom: 1.5rem;
+}
+
+#guestSearchResults {
+	max-height: 200px;
+	overflow-y: auto;
+	position: absolute;
+	z-index: 1000;
+}
+
+#guestSearchResults a {
+	background: #fff;
+}
+
+.modal-fullscreen .modal-content {
+	padding: 1.5rem;
+}
+
+.modal-fullscreen .modal-body {
+	/*max-width: 800px;
+	margin: 0 auto;*/
+	
+}
+
+.modal-header {
+	background-color: #2c3e50;
+	color: #fff;
+	border-bottom: 1px solid #34495e;
+}
+
+.modal-header .btn-close {
+	filter: invert(1); /* White close button */
+}
+
+.invited-badge {
+	font-size: 0.75rem;
+	margin-left: 0.5rem;
+	vertical-align: middle;
+	float: right;
+	color: #fff !important
+}
+
+.toggle-details {
+	cursor: pointer;
+	color: #007bff;
+	text-decoration: none;
+}
+
+.toggle-details:hover {
+	color: #0056b3;
+}
+
+.collapse {
+	transition: height 0s ease;
+}
+
+.collapsing {
+	transition: height 0s ease;
+}
+
+.filter-container {
+	display: flex;
+	align-items: center;
+	gap: 1rem;
+	margin-bottom: 1rem;
+}
+
+.filter-container .form-select {
+	min-width: 100px;
+	max-width: 300px
+}
+
+.invitation-search {
+	max-width: 300px;
+	margin-bottom: 1rem;
+}
+
+.input-group .btn-clear {
+	cursor: pointer;
+}
+
+.card-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+#attachmentList {
+	padding-left: 0;
+	margin-top: 0
+}
+
+input[name="selectedAttachments"] {
+	display: none
+}
+
+.form-check {
+	float: left
+}
+
+</style>
+
+<style>
+/* Ensure sendToAllModal is centered and has a higher z-index */
+#sendToAllModal .modal-dialog {
+    z-index: 1055; /* Higher than default modal z-index (1050) */
+}
+
+ .modal-content {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), 0 6px 20px rgba(0, 0, 0, 0.15); /* Shadow effect */
+}
+</style>
+</head>
+<body>
+	<div class="container mt-0">
+		<div th:replace="~{fragments/navbar :: navbar}"></div>
+		<div class="d-flex justify-content-between align-items-center mb-3">
+			<h2>Invitation Details</h2>
+			<div>
+				<a th:href="@{/admin/events/detail/{id}(id=${invitation.event.id})}"
+					class="btn btn-outline-secondary mr-6">Back to Event</a>
+				<button class="btn btn-primary ml-6" data-bs-toggle="modal"
+					data-bs-target="#editInvitationModal">Edit Invitation</button>
+				<button class="btn btn-success" data-bs-toggle="modal"
+					data-bs-target="#sendEmailModal" data-bs-backdrop="static" 
+					th:attr="data-invitation-id=${invitation.id},data-email-addr=${invitation.guest.emailAddr},data-email-type=Invitation"
+					th:if="${showEmailButtons}">Send Invitation</button>
+				<button class="btn btn-success" data-bs-toggle="modal"
+					data-bs-target="#sendEmailModal" data-bs-backdrop="static" 
+					th:attr="data-invitation-id=${invitation.id},data-email-addr=${invitation.guest.emailAddr},data-email-type=Confirmation"
+					th:if="${showConfirmationButton} and  ${showEmailButtons}">Send
+					Confirmation</button>
+
+
+			</div>
+
+		</div>
+
+
+		<!-- Message -->
+
+		<div th:if="${param.success}"
+			class="alert alert-success alert-dismissible fade show" role="alert">
+			<span
+				th:text="${#strings.replace(param.success, '+', ' ') == 'Email created' ? 'Email created successfully' : #strings.replace(param.success, '+', ' ')}"></span>
+			<button type="button" class="btn-close" data-bs-dismiss="alert"
+				aria-label="Close"></button>
+		</div>
+
+		<div th:if="${param.error}"
+			class="alert alert-danger alert-dismissible fade show" role="alert">
+			<span th:text="${param.error}"></span>
+			<button type="button" class="btn-close" data-bs-dismiss="alert"
+				aria-label="Close"></button>
+
+		</div>
+
+
+		<div class="card mb-4">
+			<!-- 			<div class="card-header">
+				<h3 class="card-title mb-0">Invitation Information</h3>
+			</div> -->
+			<div class="card-body">
+
+				<table class="table table-sm ">
+					<tbody id="">
+						<tr>
+							<th>Name:</th>
+							<td><span th:text="${invitation.guest.name}"></span></td>
+							<th>Type:</th>
+							<td><span th:with="guestType=${invitation.guest.type}">
+									<span th:text="${guestType.label}"></span>
+							</span>
+						</tr>
+						<tr style="display: none">
+							<th>RSVP Link:</th>
+							<td><span th:text="${invitation.rsvpLink}"></span></td>
+							<th></th>
+							<td></td>
+						</tr>
+						<tr>
+							<th>Status:</th>
+							<td><span th:with="status=${invitation.status}"> <span
+									th:class="'badge ' + ${status.badgeClass}"
+									th:text="${status.name}"></span>
+							</span></td>
+							<th>Last Updated:</th>
+							<td
+								th:text="${#temporals.format(invitation.lastUpdateTime, 'yyyy-MM-dd HH:mm:ss')}"></td>
+						</tr>
+
+					</tbody>
+				</table>
+			</div>
+		</div>
+
+		<div class="card mb-4">
+			<div class="card-header">
+				<h4 class="card-title mb-0">QR Code</h4>
+				<button class="btn btn-primary" data-bs-toggle="modal"
+					data-bs-target="#assignQrCodeModal"
+					th:if="${invitation.guest.emailAddr == null or invitation.guest.emailAddr.isEmpty()}">Assign
+					QR Code</button>
+			</div>
+			<div class="card-body">
+				<div th:if="${guestQrCodes.isEmpty()}" class="alert alert-secondary">No
+					QR codes found.</div>
+				<div th:if="${!guestQrCodes.isEmpty()}" class="table-responsive">
+					<table class="table table-striped">
+						<thead>
+							<tr>
+								<th>Type</th>
+								<th>Holder</th>
+
+								<!-- th>QR Code</th> -->
+								<th>Spouse</th>
+								<th>Status</th>
+								<th>Action</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr th:each="qrCode : ${guestQrCodes}">
+								<td
+									th:text="${qrCode.nomination != null ? 'Nomination' : 'Guest'}"></td>
+								<td
+									th:text="${qrCode.guest != null ? qrCode.guest.name : qrCode.nomination.name}"></td>
+								<td th:text="${qrCode.spouse} ? 'Yes' : ''"></td>
+								<!-- td th:text="${qrCode.qrCode}"></td> -->
+								<td th:text="${qrCode.activeInd == 'Y' ? 'Active' : 'Inactive'}"></td>
+								<td>
+
+
+									<button class="btn btn-sm btn-outline-primary"
+										data-bs-toggle="modal" data-bs-target="#viewQrCodeModal"
+										th:attr="data-qrcode-id=${qrCode.id},data-qr-value=${qrCode.qrCode},data-guest-name=${qrCode.guest?.name != null ? qrCode.guest?.name : qrCode.nomination?.name}">
+										View QR Code</button>
+									<button class="btn btn-sm btn-outline-primary"
+										th:if="${qrCode.activeInd == 'Y'}"
+										th:attr="data-id=${qrCode.id}"
+										onclick="inactiveQrCode(this.getAttribute('data-id'))">
+										Inactive</button>
+									<button class="btn btn-sm btn-outline-primary"
+										th:if="${qrCode.activeInd == 'N'}"
+										th:attr="data-id=${qrCode.id}"
+										onclick="activeQrCode(this.getAttribute('data-id'))">
+										Activate</button>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+
+		<div class="card mb-4"
+			th:if="${T(hk.jud.app.lyo.service.InvitationService).isRsvp(T(hk.jud.app.lyo.entity.enums.GuestType).valueOf(invitation.guest.type.toString()))}">
+
+
+			<div class="card-header">
+				<h4 class="card-title mb-0">Replies</h4>
+			</div>
+			<div class="card-body">
+				<div th:if="${replies.isEmpty()}" class="alert alert-secondary">No
+					replies found.</div>
+				<div th:if="${!replies.isEmpty()}" class="table-responsive">
+					<table class="table table-striped">
+						<thead>
+							<tr>
+								<th>Attend</th>
+
+								<th>Phone Number</th>
+
+
+								<th>Last Updated</th>
+								<th>Action</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr th:each="reply : ${replies}">
+								<td th:text="${reply.attendInd == 'Y' ? 'Yes' : 'No'}"></td>
+
+								<td th:text="${reply.telNo}"></td>
+
+
+								<td
+									th:text="${#temporals.format(reply.lastUpdateTime, 'yyyy-MM-dd HH:mm:ss')}"></td>
+
+								<td>
+
+									<button type="button"
+										class="btn btn-sm btn-outline-primary reply-detail-btn"
+										th:attr="data-reply-id=${reply.id}" data-bs-toggle="modal"
+										data-bs-target="#replyDetailModal">Detail</button>
+								</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+
+		<div class="card mb-4" th:if="${invitation.guest.emailAddr}">
+			<div class="card-header">
+				<h4 class="card-title mb-0">Email Log</h4>
+			</div>
+			<div class="card-body">
+				<div th:if="${emailLogs.isEmpty()}" class="alert alert-secondary">No
+					email logs found.</div>
+				<div th:if="${!emailLogs.isEmpty()}" class="table-responsive">
+					<table class="table table-striped">
+						<thead>
+							<tr>
+								<th>Sent Date</th>
+								<th>Email Type</th>
+								<th>Email Address</th>
+								<th>Language</th>
+								<th>Last Updated By</th>
+
+							</tr>
+						</thead>
+						<tbody>
+							<tr th:each="log : ${emailLogs}">
+								<td
+									th:text="${#temporals.format(log.sentDate, 'yyyy-MM-dd HH:mm:ss')}"></td>
+
+								<td th:text="${log.emailType}"></td>
+								<td th:text="${log.emailAddr}"></td>
+								<td><span th:switch="${log.lang}"> <span
+										th:case="'tc'">Chinese</span> <span th:case="'en'">English</span>
+										<span th:case="'bi'">Bilingual</span>
+								</span></td>
+								<td th:text="${log.lastUpdateId}"></td>
+
+								<!-- <td
+									th:text="${#temporals.format(log.lastUpdateTime, 'yyyy-MM-dd HH:mm:ss')}"></td> -->
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	
+	<!-- Edit Invitation Modal -->
+	<div class="modal fade" id="editInvitationModal" tabindex="-1"
+		aria-labelledby="editInvitationModalLabel" aria-hidden="true">
+		<div class="modal-dialog modal-dialog-centered">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title" id="editInvitationModalLabel">Edit
+						Invitation</h5>
+					<button type="button" class="btn-close" data-bs-dismiss="modal"
+						aria-label="Close"></button>
+				</div>
+				<div class="modal-body">
+					<form
+						th:action="@{/admin/invitation/detail/{id}(id=${invitation.id})}"
+						method="post">
+						<input type="hidden" th:name="${_csrf.parameterName}"
+							th:value="${_csrf.token}" />
+						<div class="mb-3">
+							<label for="rsvpLink" class="form-label">RSVP Link</label> <input
+								type="url" class="form-control" id="rsvpLink" name="rsvpLink"
+								th:value="${invitation.rsvpLink}" maxlength="255"
+								pattern="^[^\s<>]+$"
+								title="RSVP Link must not contain spaces or <, > characters">
+						</div>
+						<div class="mb-3">
+							<label for="status" class="form-label">Status</label> <select
+								class="form-select" id="status" name="status" required>
+								<option
+									th:each="status : ${T(hk.jud.app.lyo.entity.enums.InvitationStatus).values()}"
+									th:value="${status.value}" th:text="${status.name}"
+									th:selected="${invitation.status?.name() == status.name()}">
+								</option>
+							</select>
+						</div>
+						<div class="modal-footer">
+							<button type="button" class="btn btn-secondary"
+								data-bs-dismiss="modal">Cancel</button>
+							<button type="submit" class="btn btn-primary">Save
+								Changes</button>
+						</div>
+					</form>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="modal fade " id="replyDetailModal" tabindex="-1"
+		aria-labelledby="replyDetailModalLabel" aria-hidden="true">
+		<div class="modal-dialog modal-fullscreen">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title" id="replyDetailModalLabel">Reply
+						Details</h5>
+					<button type="button" class="btn-close" data-bs-dismiss="modal"
+						aria-label="Close"></button>
+				</div>
+				<div class="modal-body">
+					<div id="replyDetailError" class="alert alert-danger"
+						style="display: none;"></div>
+					<div class="detail-section">
+						<h6>
+							<b>Reply Information</b>
+						</h6>
+						<table class="table table-sm table-bordered">
+							<tbody id="replyInfo"></tbody>
+						</table>
+					</div>
+					<div class="detail-section">
+						<h6>
+							<b>Reply Nominations</b>
+						</h6>
+						<div id="noNominations" class="alert alert-secondary"
+							style="display: none;">No nominations found.</div>
+						<table class="table table-sm table-bordered" id="nominationsTable"
+							style="display: none;">
+							<thead>
+								<tr>
+									<th>Name</th>
+									<th>Email Address</th>
+									<!-- th>Nominee Code</th> -->
+
+								</tr>
+							</thead>
+							<tbody id="nominationsBody"></tbody>
+						</table>
+					</div>
+					<div class="detail-section">
+						<h6>
+							<b>Reply Transport</b>
+						</h6>
+						<div id="noTransports" class="alert alert-secondary"
+							style="display: none;">No transport details found.</div>
+						<table class="table table-sm table-bordered" id="transportsTable"
+							style="display: none;">
+							<thead>
+								<tr>
+									<th>From Option</th>
+									<th>Away Option</th>
+									<th>Own Arrangement</th>
+									<th>Car Registration</th>
+
+								</tr>
+							</thead>
+							<tbody id="transportsBody"></tbody>
+						</table>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary"
+						data-bs-dismiss="modal">Close</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="modal fade" id="viewQrCodeModal" tabindex="-1"
+		aria-labelledby="viewQRCodeLabel" aria-hidden="true">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title" id="viewQRCodeLabel">View QR Code</h5>
+					<button type="button" class="btn-close" data-bs-dismiss="modal"
+						aria-label="Close"></button>
+				</div>
+				<div class="modal-body">
+
+					<p>
+						<strong>Guest Name:</strong> <span id="modal-guest-name"></span>
+					</p>
+					<p>
+						<strong>QR Code Value:</strong> <span id="modal-qr-value"></span>
+					</p>
+
+
+
+
+					<div id="qrCodeContainer" class="text-center">
+						<img id="qrCodeImage" src="" alt="QR Code"
+							style="width: 200px; height: 200px;">
+
+					</div>
+					<p style="text-align: center">
+						<button style="" onclick="copyQrCode()">Copy QR Code</button>
+					</p>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary"
+						data-bs-dismiss="modal">Close</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+
+	<div class="modal fade" id="assignQrCodeModal" tabindex="-1"
+		aria-labelledby="sendEmailModalLabel" aria-hidden="true">
+		<div class="modal-dialog modal-dialog-centered">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title" >Assign
+						QR code</h5>
+					<button type="button" class="btn-close" data-bs-dismiss="modal"
+						aria-label="Close"></button>
+				</div>
+				<div class="modal-body">
+					<form
+						th:action="@{/admin/invitation/{id}/assignqrcode(id=${invitation.id})}"
+						method="post">
+						<input type="hidden" th:name="${_csrf.parameterName}"
+							th:value="${_csrf.token}" />
+						<div class="row mb-3">
+							<div class="col-md-12">
+								<label class="form-label">Guest: <b><span
+										th:text="${invitation.guest.name}"></span></b></label>
+							</div>
+
+
+						</div>
+
+						<div class="modal-footer">
+							<button type="button" class="btn btn-secondary"
+								data-bs-dismiss="modal">Cancel</button>
+							<button type="submit" class="btn btn-primary">Assign</button>
+						</div>
+					</form>
+				</div>
+			</div>
+		</div>
+
+	</div>
+
+	<div class="modal fade" id="sendEmailModal" tabindex="-1"
+		aria-labelledby="sendEmailModalLabel" aria-hidden="true">
+		<div class="modal-dialog modal-fullscreen">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title">Send Email</h5>
+					<button type="button" class="btn-close" data-bs-dismiss="modal"
+						aria-label="Close"></button>
+				</div>
+				<div id="emailErrorAlert" class="alert alert-danger d-none" role="alert"></div>
+				<div class="modal-body">
+					<form
+						th:action="@{/admin/invitation/detail/{id}/email2(id=${invitation.id})}"
+						method="post" id="sendEmailForm">
+						<input type="hidden" name="isNomination" id="isNomination" />
+						<div class="row mb-3">
+							<div class="col-md-3">
+								<label class="form-label">Guest: <b><span
+										th:text="${invitation.guest.name}"></span></b></label>
+							</div>
+							<div class="col-md-6">
+								<label class="form-label">Type: <b> <span
+										th:with="guestType=${invitation.guest.type}"> <span
+											th:text="${guestType.label}"></span>
+									</span>
+								</b></label>
+							</div>
+							<div class="col-md-4">
+								<label for="emailAddr" class="form-label">Email Address</label>
+								<div id="emailAddrContainer"></div>
+
+
+							</div>
+							<div class="col-md-2">
+								<label for="languageSelect" class="form-label">Language</label>
+								<select class="form-select" id="language" name="language">
+									<option value="en">English</option>
+									<option value="tc">Traditional Chinese</option>
+									<option value="bi">Bilingual</option>
+								</select>
+
+							</div>
+							<div class="col-md-2" style="display: none">
+								<label for="emailType" class="form-label">Email Type</label> <select
+									class="form-select" id="emailType" name="emailType"
+									onfocus="this.blur()"
+									style="pointer-events: none; background-color: #f8f9fa;">
+									<option value="INVITATION">Invitation</option>
+									<option value="CONFIRMATION">Confirmation</option>
+								</select>
+							</div>
+						</div>
+
+
+
+						<div>
+							<h3>Preview</h3>
+							<p>
+								Subject: <strong><span id="emailPreviewSubject"></span></strong>
+							</p>
+
+							<span style="float: left">Attachment(s):</span> <strong><ul
+									class="attachment-list" id="attachmentList" style="float: left"></ul></strong>
+
+							<iframe id="emailPreviewIframe"></iframe>
+
+						</div>
+						
+						
+						<button type="button" class="btn btn-primary" id="sendEmailBtn">Send</button>
+				
+						<button type="submit" class="btn btn-primary" id="sendButton">Send</button>
+						<button type="button" class="btn btn-secondary"
+							data-bs-dismiss="modal">Cancel</button>
+					</form>
+				</div>
+			</div>
+		</div>
+	</div>
+	
+	<!-- Send to All Confirmation Modal -->
+<div class="modal fade" id="sendToAllModal" tabindex="-1" aria-labelledby="sendToAllModalLabel" aria-hidden="true">
+     <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="sendToAllModalLabel">Confirm Recipients</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Multiple recipients are available for this Confirmation email. Choose an option:</p>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="recipientOption" id="sendToSelected" value="selected" checked>
+                    <label class="form-check-label" for="sendToSelected">
+                        Send to selected recipient: <span id="selectedRecipient"></span>
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="recipientOption" id="sendToAll" value="all">
+                    <label class="form-check-label" for="sendToAll">
+                        Send to all recipients
+                    </label>
+                </div>
+                <div id="recipientList" class="mt-3">
+                    <p><strong>Recipients:</strong></p>
+                    <ul id="recipientListItems"></ul>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="confirmSendBtn">Confirm</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div id="resultModal" class="modal fade" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Email Result</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p id="resultMessage" class="mb-0"></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" data-bs-dismiss="modal" onclick="window.location.reload()">OK</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+	<!-- Wait Screen Overlay -->
+	<div id="loadingOverlay" style="display: none;">
+		<div
+			style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: 9999;">
+			<div
+				style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: white;">
+				<div class="spinner"
+					style="border: 5px solid #f3f3f3; border-top: 5px solid #3498db; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin: 20px auto;"></div>
+				<p>Please wait, sending email...</p>
+			</div>
+		</div>
+	</div>
+
+
+	<script>
+
+	
+  $(document).ready(function() {
+	  
+	  console.log('document Ready')
+	    // Debounce function to limit API calls
+	    function debounce(func, wait) {
+	        let timeout;
+	        return function executedFunction(...args) {
+	            const later = () => {
+	                clearTimeout(timeout);
+	                func(...args);
+	            };
+	            clearTimeout(timeout);
+	            timeout = setTimeout(later, wait);
+	        };
+	    }
+
+
+
+	    // Get selected attachments
+	    function getSelectedAttachments() {
+	        return Array.from(document.querySelectorAll('.attachment-checkbox:checked'))
+	            .map(input => input.value)
+	            .join(',');
+	    }
+
+
+	    // Preview email function
+	    const previewEmail = debounce(function(invitationId, emailType, language, nomineeId) {
+	    	console.log('debounce')
+
+	        //const attachments =  getSelectedAttachments() ;
+	        const url = `/admin/invitation/detail/${invitationId}/preview?emailType=${encodeURIComponent(emailType)}&language=${encodeURIComponent(language)}${nomineeId ? `&nomineeId=${encodeURIComponent(nomineeId)}` : ''}`;
+	        
+	        console.log('Fetching preview:', url);
+	        console.log(nomineeId);
+	        customFetch(url)
+	            .then(data => {
+	                const iframe = document.getElementById('emailPreviewIframe');
+	                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+	                const attachmentList = document.getElementById('attachmentList');
+	                const subjectElement = document.getElementById('emailPreviewSubject');
+	                const emailAddrContainer = document.getElementById('emailAddrContainer');
+	                
+	                if (data.subject === 'Error') {
+	                    let errorMessage = 'Error occurred, no preview available.';
+	                    let detailMessage = data.content;
+	                    const match = data.content.match(/Template not found for guest type: (.+), emailType: (\w+)/);
+	                    if (match) {
+	                        const guestType = match[1];
+	                        const emailType = match[2];
+	                        detailMessage = `Template (${emailType}) not found for guest type: ${guestType}`;
+	                    }
+	                    iframeDoc.open();
+	                    iframeDoc.write(`<!DOCTYPE html><html><head><style>body { margin: 0; padding: 10px; font-family: Arial, sans-serif; color: #dc3545; }</style></head><body><p>${errorMessage}</p><p>${detailMessage}</p></body></html>`);
+	                    iframeDoc.close();
+	                    subjectElement.innerText = '';
+	                    attachmentList.innerHTML = '';
+	                    return;
+	                }
+					
+	                console.log(data.reciplientId)
+	                const reciplientId = data.reciplientId
+	                const invitationId = [[${invitation.id}]];
+	                if (emailType === 'CONFIRMATION') {
+	                    loadNomineeEmails(invitationId, (data) => {
+	                        if (data.nominees && data.nominees.length > 0) {
+	                            // Show dropdown with Guest and Nominee emails
+	                            emailAddrContainer.innerHTML = `
+	                                <select   class="form-select" id="emailAddrSelect" name="emailAddr" required>
+	                                    <option value="${data.guestId}">${data.guestEmail} (Guest)</option>
+	                                    ${data.nominees.map(n => `<option value="${n.id}" ${n.id === reciplientId ? 'selected' : ''}>${n.emailAddr} (Nominee: ${n.name})*</option>`).join('')}
+	                                </select>
+	                            `;
+	                            
+	                            // Update the previewEmail
+	                            const selectElement = document.getElementById('emailAddrSelect');
+	                            const isNomination = document.getElementById('isNomination');
+	                            selectElement.addEventListener('change', function() {
+	                            	
+	                            const selectElement = document.getElementById('emailAddrSelect');
+	                            const nomineeId = selectElement.options[selectElement.selectedIndex].text.toLowerCase().includes('nominee') ? selectElement.value : null;
+	                            isNomination.value = selectElement.options[selectElement.selectedIndex].text.toLowerCase().includes('nominee') ? 1 : 0
+	          					
+	                	   	    previewEmail(invitationId, emailType, language, nomineeId);
+	
+		                            });
+	                        } else {
+	                            // Show readonly input for Guest email
+	                            emailAddrContainer.innerHTML = `
+	                                <input type="text" class="form-control" id="emailAddr" name="emailAddr" value="${data.guestEmail}" readonly>
+	                            `;
+	                        }
+	                        
+	                    });
+	                } else {
+	                    // INVITATION: Use readonly Guest email
+	                    console.log ('INVITATION: Use readonly Guest email')
+	                    emailAddrContainer.innerHTML = `
+	                    	<input type="email" id="emailAddr" name="emailAddr"  value="[[${invitation.guest.emailAddr}]]" class="form-control" readonly/>
+
+	                    `;
+	                    
+	                }
+	                
+	                if (data.status === 403) {
+	                    window.location.href = '/login';
+	                    return;
+	                }
+	                
+	                subjectElement.innerText = data.subject;
+	                iframeDoc.open();
+	                iframeDoc.write('<!DOCTYPE html><html><head><style>body { margin: 0; padding: 10px; }</style></head><body>' + data.content + '</body></html>');
+	                iframeDoc.close();
+
+	                // Dynamically create checkboxes for attachments
+	                attachmentList.innerHTML = '';
+	                if (data.attachments && data.attachments.length > 0) {
+	                    data.attachments.forEach(imp => {
+	                    	const div = document.createElement('div');
+	                        div.className = 'form-check';
+	                        const input = document.createElement('input');
+	                        input.type = 'checkbox';
+	                        input.name = 'selectedAttachments';
+	                        input.checked = true;
+	                        
+	                        input.className = 'form-check-input attachment-checkbox';
+	                        input.id = `attachment-${imp}`;
+	                        input.value = imp;
+	                        //input.checked = attachments.includes(imp);
+	                       // input.addEventListener('change', updatePreview);
+	                        const label = document.createElement('label');
+	                        label.className = 'form-check-label';
+	                        label.htmlFor = `attachment-${imp}`;
+	                        const link = document.createElement('a');
+	                        link.href = `/attachments/${imp}`;
+	                        link.target = '_blank';
+	                        link.textContent = imp;
+	                        label.appendChild(link);
+	                        div.appendChild(input);
+	                        div.appendChild(label);
+	                        attachmentList.appendChild(div);
+	                    });
+	                }
+	            })
+	            .catch(error => {
+	                if (error.message !== 'Session expired' && error.message !== 'Invalid response type') {
+	                    console.error('Preview error:', error);
+	                    const iframe = document.getElementById('emailPreviewIframe');
+	                    const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+	                    let detailMessage = error.message;
+	                    const match = error.message.match(/Server error: \d+ - ({.*})/);
+	                    if (match) {
+	                        try {
+	                            const json = JSON.parse(match[1]);
+	                            const contentMatch = json.content.match(/Template not found for guest type: (.+), emailType: (\w+)/);
+	                            if (contentMatch) {
+	                                const guestType = contentMatch[1];
+	                                const emailType = contentMatch[2];
+	                                detailMessage = `Template (${emailType}) not found for guest type: ${guestType}`;
+	                            }
+	                        } catch (e) {
+	                            console.error('Error parsing JSON:', e);
+	                        }
+	                    }
+	                    iframeDoc.open();
+	                    iframeDoc.write(`<!DOCTYPE html><html><head><style>body { margin: 0; padding: 10px; font-family: Arial, sans-serif; color: #dc3545; }</style></head><body><p>Error occurred, no preview available.</p><p>${detailMessage}</p></body></html>`);
+	                    iframeDoc.close();
+	                    document.getElementById('emailPreviewSubject').innerText = '';
+	                    document.getElementById('attachmentList').innerHTML = '';
+	                }
+	            });
+	    }, 300);
+
+	    function loadNomineeEmails(invitationId, callback) {
+	        fetch(`/admin/invitation/detail/${invitationId}/nominees`, {
+	            headers: {
+	                'X-CSRF-TOKEN': '[[${_csrf.token}]]'
+	            }
+	        })
+	        .then(response => {
+	            if (!response.ok) {
+	                throw new Error('Failed to fetch nominee emails');
+	            }
+	            return response.json();
+	        })
+	        .then(data => {
+	            callback(data);
+	        })
+	        .catch(error => {
+	            console.error('Error fetching nominee emails:', error);
+	            callback({ guestEmail: /*[[${invitation.guest.emailAddr}]]*/ '', nominees: [] });
+	        });
+	    }
+	    
+	    // Modal initialization
+	    $('#sendEmailModal').on('show.bs.modal', function(event) {
+	    	
+	        // Remove existing listeners to prevent duplication
+	        $(this).off('change', '#emailType, #language, #attachmentList input');
+	        console.log('Modal initialization');
+	       
+	        const $button = $(event.relatedTarget);
+	        const invitationId = $button.data('invitation-id');
+	        this.dataset.invitationId = invitationId; // Store for updatePreview
+	        const defaultEmailType = $button.text().includes('Confirmation') ? 'CONFIRMATION' : 'INVITATION';
+	        
+	        
+	        
+	        const $emailType = $('#emailType');
+	        const $language = $('#language');
+	        const $emailAddr = $('#emailAddr');
+
+	        const modalTitle = this.querySelector('.modal-title');
+	        const emailType =  $button.attr('data-email-type'); // e.g., "Invitation"
+	
+	        modalTitle.textContent = 'Send ' + emailType; // Set the title dynamically
+	        
+	        // Set default values
+	        $emailType.val(defaultEmailType);
+	        $language.val('en');
+	       
+	        $emailAddr.val($button.data('email-addr') || '');
+
+	        // Initial preview
+	        previewEmail(invitationId, $emailType.val(), $language.val());
+
+	        // Bind change events
+	        $(this).on('change', '#emailType, #language', function() {
+	            const emailType = $emailType.val();
+	            const language = $language.val();
+	            previewEmail(invitationId, emailType, language);
+	        });
+	    });
+
+	    document.querySelectorAll('.reply-detail-btn').forEach(button => {
+	        button.addEventListener('click', function() {
+	            const replyId = this.getAttribute('data-reply-id');
+	            fetch(`/admin/invitation/detail/reply/${replyId}`, {
+	                headers: {
+	                    'X-CSRF-TOKEN': '[[${_csrf.token}]]'
+	                }
+	            })
+	            .then(response => {
+	                if (!response.ok) {
+	                    throw new Error('Failed to fetch reply details');
+	                }
+	                return response.json();
+	            })
+	            .then(data => {
+	                replyDetailError.style.display = 'none';
+	                
+	                if (data.error) {
+	                    replyDetailError.textContent = data.error;
+	                    replyDetailError.style.display = 'block';
+	                    replyInfo.innerHTML = '';
+	                    nominationsTable.style.display = 'none';
+	                    noNominations.style.display = 'none';
+	                    transportsTable.style.display = 'none';
+	                    noTransports.style.display = 'none';
+	                    return;
+	                }
+
+	                const date = new Date(data.reply.lastUpdateTime);
+	                const formattedDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}`;
+		                // Reply Information
+		                replyInfo.innerHTML = `
+		                
+		                	<tr><th style="width:20%">Attend</th><td>${data.reply.attendInd === 'Y' ? 'Yes' : 'No'}</td></tr>
+		                	<tr><th>With spouse</th><td>${data.reply.spouseInd ==='Y' ? 'Yes' : 'No'}</td></tr>
+		                    <!--<tr><th>Email Address</th><td>${data.reply.emailAddr || '-'}</td></tr>-->
+		                    <tr><th>Phone Number</th><td>${data.reply.telNo || '-'}</td></tr>
+		                    <!--<tr><th>Guest Code</th><td>${data.reply.guestCode}</td></tr>-->
+		                    <!--<tr><th>Last Updated By</th><td>${data.reply.lastUpdateId}</td></tr>-->
+		                    <tr><th>Last Updated</th><td>${formattedDate}</td></tr>
+		                `;
+
+	                // Reply Nominations
+	                if (data.nominations.length === 0) {
+	                    nominationsTable.style.display = 'none';
+	                    noNominations.style.display = 'block';
+	                } else {
+	                    nominationsTable.style.display = 'table';
+	                    noNominations.style.display = 'none';
+	                    nominationsBody.innerHTML = data.nominations.map(n => `
+	                        <tr>
+	                            <td style="width:20%">${n.name}</td>
+	                            <td>${n.emailAddr}</td>
+	                            <!--<td>${n.nomineeCode}</td>-->
+	                        </tr>
+	                    `).join('');
+	                }
+
+	                // Reply Transport
+	                if (data.transports.length === 0) {
+	                    transportsTable.style.display = 'none';
+	                    noTransports.style.display = 'block';
+	                } else {
+	                    transportsTable.style.display = 'table';
+	                    noTransports.style.display = 'none';
+	                    transportsBody.innerHTML = data.transports.map(t => `
+	                        <tr>
+	                            <td>${t.fromOpt || '-'}</td>
+	                            <td>${t.awayOpt || '-'}</td>
+	                            <td>${t.ownArrangement || '-'}</td>
+	                            <td>${t.carRegistrationNo || '-'}</td>
+	                         
+	                        </tr>
+	                    `).join('');
+	                }
+	            })
+	            .catch(error => {
+	                replyDetailError.textContent = 'Error loading reply details: ' + error.message;
+	                replyDetailError.style.display = 'block';
+	                replyInfo.innerHTML = '';
+	                nominationsTable.style.display = 'none';
+	                noNominations.style.display = 'none';
+	                transportsTable.style.display = 'none';
+	                noTransports.style.display = 'none';
+	            });
+	        });
+	    });
+
+	    replyDetailModal.addEventListener('hidden.bs.modal', function() {
+	        replyInfo.innerHTML = '';
+	        nominationsTable.style.display = 'none';
+	        nominationsBody.innerHTML = '';
+	        noNominations.style.display = 'none';
+	        transportsTable.style.display = 'none';
+	        transportsBody.innerHTML = '';
+	        noTransports.style.display = 'none';
+	        replyDetailError.style.display = 'none';
+	    });
+	    
+	    // Cleanup on modal close
+	    $('#sendEmailModal').on('hidden.bs.modal', function() {
+	        $(this).off('change', '#emailType, #language');
+	        document.getElementById('attachmentList').innerHTML = '';
+	        document.getElementById('emailPreviewSubject').innerText = '';
+	        document.getElementById('emailPreviewIframe').contentDocument.write('');
+	    });
+	    
+
+	});
+  
+//Modal initialization
+
+  document.getElementById('sendEmailForm').addEventListener('submit', function(event) {
+      // Prevent default form submission until confirmation
+      event.preventDefault();
+      const confirmSend = confirm('Are you sure you want to send this email?');
+      if (confirmSend) {
+      // Show the wait screen
+      	document.getElementById('loadingOverlay').style.display = 'block';
+      	form = document.getElementById('sendEmailForm')
+      	form.submit()
+      }
+  })
+
+	  
+
+
+  
+    </script>
+	<script
+		src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+	<script
+		src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+
+	<script>
+    document.addEventListener('DOMContentLoaded', function () {
+    	const sendEmailModal = document.getElementById('sendEmailModal');
+    	const sendToAllModal = document.getElementById('sendToAllModal');
+    	const sendEmailBtn = document.getElementById('sendEmailBtn');
+    	const emailAddrSelect = document.getElementById('emailAddrSelect');
+    	const confirmSendBtn = document.getElementById('confirmSendBtn');
+
+    	let recipients = [];
+    	
+        const modalElement = document.getElementById('viewQrCodeModal');
+
+	
+        modalElement.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            const qrId = button.getAttribute('data-qrcode-id');
+            const qrValue = button.getAttribute('data-qr-value');
+            const guestName = button.getAttribute('data-guest-name') || 'Unknown';
+            
+            const guestNameElement = document.getElementById('modal-guest-name');
+            const guestQrValElement = document.getElementById('modal-qr-value');
+            const qrCodeImage = document.getElementById('qrCodeImage');
+            
+
+            guestNameElement.textContent = guestName;
+            guestQrValElement.textContent = qrValue;
+
+
+        
+
+            if (qrId) {
+                const url = `/admin/qrcodes/view/${qrId}/`;
+                qrCodeImage.src = url; // Set the image source to the REST endpoint
+                qrCodeImage.onerror = function () {
+                    console.error('Failed to load QR code image from:', url);
+                    qrCodeImage.src = ''; // Clear src on error
+                    qrCodeImage.alt = 'Failed to load QR code';
+                };
+            } else {
+                console.error('No data-qr-id attribute found on button.');
+                qrCodeImage.src = '';
+                qrCodeImage.alt = 'No QR code ID provided';
+            }
+        });
+        
+        // Populate email addresses when Send Email modal is shown
+        sendEmailModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            const invitationId = button.dataset.invitationId;
+            const guestName = button.dataset.guestName;
+
+            console.log(this)
+            console.log('Populate email addresses when Send Email modal is shown')
+            // Set guest name
+            //document.getElementById('email-guest-name').textContent = guestName;
+
+            // Fetch nominee emails
+            fetch(`/admin/invitation/detail/${invitationId}/nominees`)
+                .then(response => response.json())
+                .then(data => {
+                    recipients = [{ id: data.guestId, email: data.guestEmail, name: data.guestName, isNomination: false }];
+                    data.nominees.forEach(nominee => {
+                        recipients.push({ id: nominee.id, email: nominee.emailAddr, name: nominee.name, isNomination: true });
+                    });
+					console.log(recipients);
+                    // Set isNomination based on selection
+                    emailAddrSelect.addEventListener('change', function () {
+                        const selectedRecipient = recipients.find(r => r.id === this.value);
+                        document.getElementById('isNomination').value = selectedRecipient.isNomination ? '1' : '0';
+                    });
+                    
+                   
+                })
+                .catch(error => console.error('Error fetching nominees:', error));
+        });
+        
+        
+        // Handle Send button click
+        sendEmailBtn.addEventListener('click', function () {
+            const emailType = document.getElementById('emailType').value;
+            if (emailType === 'CONFIRMATION' && recipients.length > 1) {
+                // Show Send to All modal if Confirmation and multiple recipients
+				
+                const selectedRecipient = recipients.find(r => r.id ===  document.getElementById('emailAddrSelect').value);
+                document.getElementById('selectedRecipient').textContent = `${selectedRecipient.name} (${selectedRecipient.email})`;
+
+                // Populate recipient list
+                const recipientListItems = document.getElementById('recipientListItems');
+                recipientListItems.innerHTML = '';
+                recipients.forEach(recipient => {
+                    const li = document.createElement('li');
+                    li.textContent = `${recipient.name} (${recipient.email})`;
+                    recipientListItems.appendChild(li);
+                });
+
+                // Show Send to All modal
+                new bootstrap.Modal(sendToAllModal).show();
+            } else {
+                // Submit form directly for single recipient or non-Confirmation emails
+                //document.getElementById('sendEmailForm').submit();
+                submitEmailForm()
+            }
+        });
+        
+     // Handle Confirm Send button in Send to All modal
+        confirmSendBtn.addEventListener('click', function () {
+            document.getElementById('loadingOverlay').style.display = 'block';
+            const sendToAll = document.getElementById('sendToAll').checked;
+            const resultModal = new bootstrap.Modal(document.getElementById('resultModal'));
+            const resultMessage = document.getElementById('resultMessage');
+
+            if (sendToAll) {
+                // Submit form for each recipient sequentially
+                (async () => {
+                    const form = document.getElementById('sendEmailForm');
+                    const loadingOverlay = document.getElementById('loadingOverlay');
+                    let allSuccessful = true;
+                    const errorMessages = [];
+
+                    try {
+                        for (const recipient of recipients) {
+                            try {
+                                const formData = new FormData(form);
+                                formData.set('emailAddr', recipient.id);
+                                formData.set('isNomination', recipient.isNomination ? '1' : '0');
+
+                                const response = await fetch(form.action, {
+                                    method: 'POST',
+                                    body: formData
+                                });
+                                
+                                const data = await response.json();
+                                if (data.status !== 200) {
+                                    throw new Error(data.message);
+                                }
+                            } catch (error) {
+                                allSuccessful = false;
+                                errorMessages.push(`Failed to send email to ${recipient.email}: ${error.message}`);
+                                // Continue to next recipient even if this one fails
+                            }
+                        }
+
+                        // Close modals and show result
+                        loadingOverlay.style.display = 'none';
+                        bootstrap.Modal.getInstance(sendToAllModal).hide();
+                        bootstrap.Modal.getInstance(sendEmailModal).hide();
+                        
+                        setTimeout(() => {
+                            document.querySelectorAll('.modal-backdrop').forEach(backdrop => backdrop.remove());
+                            document.body.classList.remove('modal-open');
+                            document.body.style.removeProperty('overflow');
+                            document.body.style.removeProperty('padding-right');
+                        }, 300);
+
+                        if (allSuccessful) {
+                            resultMessage.textContent = 'All emails sent successfully';
+                            resultMessage.classList.remove('text-danger');
+                            resultMessage.classList.add('text-success');
+                        } else {
+                            resultMessage.textContent = errorMessages.join('\n');
+                            resultMessage.classList.remove('text-success');
+                            resultMessage.classList.add('text-danger');
+                        }
+                        resultModal.show();
+
+                    } catch (error) {
+                        // This catches any unexpected errors in the overall process
+                        loadingOverlay.style.display = 'none';
+                        bootstrap.Modal.getInstance(sendToAllModal).hide();
+                        
+                        resultMessage.textContent = error.message;
+                        resultMessage.classList.remove('text-success');
+                        resultMessage.classList.add('text-danger');
+                        resultModal.show();
+                    }
+                })();
+            } else {
+                // Submit form for selected recipient
+                submitEmailForm();
+            }
+        });
+
+        function submitEmailForm() {
+            const form = document.getElementById('sendEmailForm');
+            const resultModal = new bootstrap.Modal(document.getElementById('resultModal'));
+            const resultMessage = document.getElementById('resultMessage');
+            document.getElementById('loadingOverlay').style.display = 'block';
+
+            fetch(form.action, {
+                method: 'POST',
+                body: new FormData(form)
+            })
+            .then(response => response.json())
+            .then(data => {
+            	console.log('submitEmailForm then')
+                document.getElementById('loadingOverlay').style.display = 'none';
+                if (data.status !== 200) {
+                    throw new Error(data.message);
+                }
+                try {
+                bootstrap.Modal.getInstance(sendEmailModal).hide();
+                bootstrap.Modal.getInstance(sendToAllModal).hide();
+                }
+                catch (error) {}
+                
+             // Remove backdrop after modals close
+    // Remove backdrop after modals close
+                    setTimeout(() => {
+                        document.querySelectorAll('.modal-backdrop').forEach(backdrop => backdrop.remove());
+                        document.body.classList.remove('modal-open');
+                        document.body.style.removeProperty('overflow');
+                        document.body.style.removeProperty('padding-right');
+                    }, 500); // Wait for modal hide animation
+                    
+                resultMessage.textContent = data.message;
+                resultMessage.classList.remove('text-danger');
+                resultMessage.classList.add('text-success');
+                resultModal.show();
+            })
+            .catch(error => {
+                document.getElementById('loadingOverlay').style.display = 'none';
+                //bootstrap.Modal.getInstance(sendToAllModal).hide();
+                resultMessage.textContent = error.message;
+                resultMessage.classList.remove('text-success');
+                resultMessage.classList.add('text-danger');
+                resultModal.show();
+            });
+        }
+        
+    });
+    
+    
+    
+    
+    </script>
+	<script>
+    async function copyQrCode() {
+        try {
+            const img = document.getElementById('qrCodeImage');
+            const response = await fetch(img.src);
+            const jpegBlob = await response.blob();
+
+            // Create a canvas to convert JPEG to PNG
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const image = new Image();
+            image.src = URL.createObjectURL(jpegBlob);
+            
+            await new Promise((resolve) => {
+                image.onload = () => {
+                    canvas.width = image.width;
+                    canvas.height = image.height;
+                    ctx.drawImage(image, 0, 0);
+                    URL.revokeObjectURL(image.src);
+                    resolve();
+                };
+            });
+
+            // Convert canvas to PNG blob
+            const pngBlob = await new Promise((resolve) => {
+                canvas.toBlob((blob) => {
+                    resolve(blob);
+                }, 'image/png');
+            });
+
+            await navigator.clipboard.write([
+                new ClipboardItem({ 'image/png': pngBlob })
+            ]);
+            alert('QR Code copied to clipboard!');
+        } catch (error) {
+            console.error('Failed to copy QR Code:', error);
+            alert('Failed to copy QR Code: ' + error.message);
+        }
+    }
+</script>
+	<script>
+   function inactiveQrCode(qrCodeId) {
+       if (confirm('Are you sure you want to deactivate this QR code?')) {
+           fetch(`/admin/invitation/qrcode/${qrCodeId}/inactive`, {
+               method: 'POST',
+               headers: { 'Content-Type': 'application/json',    
+            	   'X-CSRF-TOKEN': '[[${_csrf.token}]]' }
+           })
+           .then(response => response.json())
+           .then(data => {
+               const param = data.success ? `success=${encodeURIComponent(data.message)}` : `error=${encodeURIComponent(data.message)}`;
+               window.location.href = `${window.location.pathname}?${param}`;
+           })
+           .catch(error => {
+               window.location.href = `${window.location.pathname}?error=${encodeURIComponent('Error: ' + error.message)}`;
+           });
+       }
+   }
+   
+   function activeQrCode(qrCodeId) {
+       if (confirm('Are you sure you want to activate this QR code?')) {
+           fetch(`/admin/invitation/qrcode/${qrCodeId}/active`, {
+               method: 'POST',
+               headers: { 'Content-Type': 'application/json',    
+            	   'X-CSRF-TOKEN': '[[${_csrf.token}]]' }
+           })
+           .then(response => response.json())
+           .then(data => {
+               const param = data.success ? `success=${encodeURIComponent(data.message)}` : `error=${encodeURIComponent(data.message)}`;
+               window.location.href = `${window.location.pathname}?${param}`;
+           })
+           .catch(error => {
+               window.location.href = `${window.location.pathname}?error=${encodeURIComponent('Error: ' + error.message)}`;
+           });
+       }
+   }
+    </script>
+<script th:src="@{/js/invitation-detail.js}"></script>
+</body>
+</html>

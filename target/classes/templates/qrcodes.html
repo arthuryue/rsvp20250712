@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title>QR Codes</title>
+    <link th:href="@{/css/bootstrap.min.css}" rel="stylesheet">
+    <link th:href="@{/css/bootstrap-icons.css}" rel="stylesheet">
+    <style>
+        .navbar-light .navbar-nav .nav-link.active {
+            font-weight: bold;
+            color: #007bff !important;
+            background-color: #e7f1ff !important;
+            border-radius: 0.25rem;
+            padding: 0.5rem 1rem;
+        }
+        .navbar-light .navbar-nav .nav-link:hover {
+            color: #0056b3 !important;
+        }
+        .navbar-light .navbar-nav .nav-link {
+            transition: color 0.2s, background-color 0.2s;
+        }
+    </style>
+</head>
+<body>
+<div class="container mt-0">
+		<div th:replace="~{fragments/navbar :: navbar}"></div>
+ <div th:if="${param.success}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <span th:text="${#strings.replace(param.success, '+', ' ') == 'QR Code created' ? 'QR Code created successfully' : 'Operation completed successfully'}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    <div th:if="${param.error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <span th:text="${param.error}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    
+    
+    
+<div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>QR Codes</h2>
+     <a th:href="@{/admin/qrcodes/new}" class="btn btn-primary mb-3">Add  QR Code</a>
+
+    </div>
+    
+
+
+
+<!-- Search and Filter Form -->
+ 
+    
+    <form th:action="@{/admin/qrcodes}" method="get"  class="mb-3">
+    <div class="row g-3 align-items-end">
+    
+        <div class="col-auto">
+            <label for="searchQuery" class="form-label">QR Code / Guest Name</label>
+            <input type="text" id="searchQuery" name="searchQuery" class="form-control" th:value="${param.searchQuery}">
+        </div>
+        <div class="col-auto">
+            <label for="activeInd" class="form-label">Active Status</label>
+            <select id="activeInd" name="activeInd" class="form-control" >
+                <option value="" th:selected="${activeInd == ''}">All</option>
+                <option value="Y" th:selected="${activeInd == 'Y'}">Active</option>
+                <option value="N" th:selected="${activeInd == 'N'}">Inactive</option>
+            </select>
+        </div>
+         <div class="col-auto">
+                <button type="submit" class="btn btn-primary">Search</button>
+            </div>
+       
+        </div>
+    </form>
+    
+    
+    
+<table class="table table-striped">
+
+        <thead>
+            <tr>
+                <th></th>
+                <th>Guest</th>
+                 <th>Is Nomination</th>
+                <th>Event</th>
+                <th>QR Code 1</th>
+                 <th>QR Code 2</th>
+                <th>Active</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="qrcode : ${qrcodes}">
+                <td>
+               <span th:if="${qrcode.guest?.type?.toString() == 'SYSTEM'}" class="badge" style="background-color: green; color: white;">Available</span>
+
+                </td>
+                
+                <td th:text="${qrcode.guest?.name != null ? qrcode.guest?.name : qrcode.nomination?.name}"></td>
+
+              <td th:text="${qrcode.nomination?.name != null} ? 'Yes' : ''"></td>
+
+                <td th:text="${qrcode.event?.eventName}"></td>
+                <td th:text="${qrcode.qrCode}"></td>
+                <td th:text="${qrcode.qrCode2}"></td>
+                <td th:text="${qrcode.activeInd}"></td>
+                <td>
+                    <a th:href="@{/admin/qrcodes/detail/{id}(id=${qrcode.id})}">Detail</a>&nbsp;|&nbsp;
+                    <a th:href="@{/admin/qrcodes/update/{id}(id=${qrcode.id})}">Edit</a>
+                </td>
+            </tr>
+             <tr th:if="${qrcodes == null or qrcodes.empty}" class="text-center">
+                <td colspan="8">No QR codes found.</td>
+            </tr>
+        </tbody>
+    </table>
+    
+      <!-- Pagination -->
+    <nav aria-label="Page navigation" th:if="${qrcodes.totalPages > 1}">
+        <ul class="pagination justify-content-center">
+            <li class="page-item" th:classappend="${currentPage == 0 ? 'disabled' : ''}">
+                <a class="page-link" th:href="@{/admin/qrcodes(page=${currentPage - 1}, size=${pageSize}, sort=${sortField + ',' + sortDirection}, activeInd=${activeInd}, code=${code})}">Previous</a>
+            </li>
+            <li class="page-item" th:each="pageNum : ${#numbers.sequence(0, totalPages - 1)}" 
+                th:classappend="${pageNum == currentPage ? 'active' : ''}">
+                <a class="page-link" th:href="@{/admin/qrcodes(page=${pageNum}, size=${pageSize}, sort=${sortField + ',' + sortDirection}, activeInd=${activeInd}, code=${code})}" th:text="${pageNum + 1}"></a>
+            </li>
+            <li class="page-item" th:classappend="${currentPage == totalPages - 1 ? 'disabled' : ''}">
+                <a class="page-link" th:href="@{/admin/qrcodes(page=${currentPage + 1}, size=${pageSize}, sort=${sortField + ',' + sortDirection}, activeInd=${activeInd}, code=${code})}">Next</a>
+            </li>
+        </ul>
+    </nav>
+    
+
+    </div>
+</body>
+</html>

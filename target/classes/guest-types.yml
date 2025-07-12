@@ -1,0 +1,11 @@
+guest_type:
+  senior_counsil:
+    rsvp: true
+  general_guest_1:
+    rsvp: true
+  general_guest_2:
+    rsvp: false
+  other_guest_1:
+    rsvp: true
+  other_guest_2:
+    rsvp: false

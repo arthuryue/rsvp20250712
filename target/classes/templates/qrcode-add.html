@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+	xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+<meta charset="UTF-8">
+<title>Add QR Code</title>
+<link th:href="@{/css/styles.css}" rel="stylesheet">
+
+<link th:href="@{/css/bootstrap.min.css}" rel="stylesheet">
+
+<script th:src="@{/js/jquery-3.6.0.min.js}"></script>
+<style>
+.navbar-light .navbar-nav .nav-link.active {
+	font-weight: bold;
+	color: #007bff !important;
+	background-color: #e7f1ff !important;
+	border-radius: 0.25rem;
+	padding: 0.5rem 1rem;
+}
+
+.navbar-light .navbar-nav .nav-link:hover {
+	color: #0056b3 !important;
+}
+
+.navbar-light .navbar-nav .nav-link {
+	transition: color 0.2s, background-color 0.2s;
+}
+</style>
+</head>
+<body>
+	<div class="container mt-0">
+		<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+		<h1>Add QR Code</h1>
+
+		<div th:if="${param.error}"
+			class="alert alert-danger alert-dismissible fade show" role="alert">
+			<span th:text="${param.error}"></span>
+			<button type="button" class="btn-close" data-bs-dismiss="alert"
+				aria-label="Close"></button>
+		</div>
+
+		<form th:object="${qrcode}" th:action="@{/admin/qrcodes/add}"
+			method="post">
+			<table class="table table-bordered">
+				<tbody>
+					<tr>
+						<th scope="row">Event:</th>
+						<td><select th:field="*{event.id}" id="eventId"
+							class="form-select" required>
+								<option value="">Select an Event</option>
+								<option th:each="event : ${events}" th:value="${event.id}"
+									th:text="${event.eventName}"></option>
+						</select></td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="guestId" class="form-label">Guest:</label></th>
+						<td><select th:field="*{guest.id}" id="guestId"
+							class="form-select" required>
+								<option value="">Select a Guest</option>
+						</select></td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="qrCode" class="form-label">QR
+								Code:</label></th>
+						<td><input type="text" th:field="*{qrCode}" id="qrCode"
+							class="form-control" required></td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="qrCode2" class="form-label">QR
+								Code 2:</label></th>
+						<td><input type="text" th:field="*{qrCode2}" id="qrCode2"
+							class="form-control"></td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="activeInd" class="form-label">Active:</label>
+						</th>
+						<td><select th:field="*{activeInd}" id="activeInd"
+							class="form-select">
+								<option value="Y">Yes</option>
+								<option value="N">No</option>
+						</select></td>
+					</tr>
+				</tbody>
+			</table>
+
+
+
+			<button type="submit" class="btn btn-primary">Create</button>
+			<a th:href="@{/admin/qrcodes}" class="btn btn-secondary">Cancel</a>
+		</form>
+	</div>
+	<script>
+		$(document)
+				.ready(
+						function() {
+							$('#eventId')
+									.change(
+											function() {
+												var eventId = $(this).val();
+												if (eventId) {
+													$
+															.ajax({
+																url : '/admin/qrcodes/guests-by-event',
+																type : 'GET',
+																data : {
+																	eventId : eventId
+																},
+																success : function(
+																		data) {
+																	var $guestSelect = $('#guestId');
+																	$guestSelect
+																			.empty();
+																	$guestSelect
+																			.append('<option value="">Select a Guest</option>');
+																	$
+																			.each(
+																					data,
+																					function(
+																							index,
+																							guest) {
+																						$guestSelect
+																								.append('<option value="' + guest.id + '">'
+																										+ guest.name
+																										+ ' ('
+																										+ guest.guestCode
+																										+ ')</option>');
+																					});
+																},
+																error : function() {
+																	alert('Failed to load guests for the selected event.');
+																	$(
+																			'#guestId')
+																			.empty()
+																			.append(
+																					'<option value="">Select a Guest</option>');
+																}
+															});
+												} else {
+													$('#guestId')
+															.empty()
+															.append(
+																	'<option value="">Select a Guest</option>');
+												}
+											});
+						});
+	</script>
+</body>
+</html>

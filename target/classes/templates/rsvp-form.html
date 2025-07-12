@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RSVP Form</title>
+    <link th:href="@{/css/bootstrap.min.css}" rel="stylesheet">
+<link th:href="@{/css/bootstrap-icons.css}" rel="stylesheet">
+
+   <style>
+        .gradient-banner {
+            background-image: linear-gradient(to right top, #051937, #004d7a, #008793, #00bf72, #a8eb12);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+
+        .h5 {
+        text-decoration: underline
+        }
+        input.form-control 
+        { border-color: #111;
+        }
+        .form-check
+        {
+        margin-bottom: 0.6rem
+        }
+         .form-check-input {
+            width: 1.2rem;
+            height: 1.2rem;
+            border: 2px solid;
+            margin-right: 0.5rem;
+        }
+        .form-check-input:checked {
+            background-color: #111;
+            border-color: #111;
+        }
+        .form-check-input:focus {
+            box-shadow: 0 0 0 0.25rem rgba(0, 123, 255, 0.25);
+        }
+        label
+         {
+         display: block;
+         }
+    </style>
+</head>
+<body class="bg-light d-flex align-items-center justify-content-center min-vh-100">
+    <div class="container bg-white p-4 rounded shadow-lg" style="max-width: 800px;">
+       <div class="gradient-banner">RSVP for Legal Year <br />Opening Ceremony 2026</div>
+       
+        <form id="rsvpForm" class="row g-3">
+           
+            
+            <!-- div class="col-12">
+                <div class="row align-items-center">
+                    <div class="col-4">
+                        <label for="emailAddr" class="form-label mb-0">Email Address</label>
+                    </div>
+                    <div class="col-8">
+                        <input type="email" class="form-control" id="emailAddr" name="emailAddr" value="guestJUDEKI00010@example.com" required>
+                    </div>
+                </div>
+            </div> -->
+            <div class="col-12">
+                <div class="row align-items-center">
+                    <div class="col-4">
+                        <label for="telNo" class="form-label mb-0">Name</label>
+                    </div>
+                    <div class="col-8">
+                       <b>Guest Name</b>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12">
+                <div class="row align-items-center">
+                    <div class="col-4">
+                        <label for="telNo" class="form-label mb-0">Phone Number</label>
+                    </div>
+                    <div class="col-8">
+                        <input type="tel" class="form-control" id="telNo" name="telNo" value="1234567890" required>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 mt-4">
+                <h3 class="h5">PART A - Confirmation of Attendance</h3>
+                <label class="form-label">Please select the appropriate</label>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="attendInd" value="Y" id="attendAlone" checked>
+                    <label class="form-check-label" for="attendAlone">I shall attend</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="attendInd" value="Y" id="attendWithSpouse">
+                    <label class="form-check-label " for="attendWithSpouse">My spouse and I shall attend</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="attendInd" value="N" id="notAttend">
+                    <label class="form-check-label" for="notAttend">I / My spouse and I shall not be able to attend</label>
+                </div>
+            </div>
+            
+            <div class="col-12 mt-4">
+                <h3 class="h5">PART B - Nomination of Personal Guests</h3>
+                <p>I propose that the following guests be invited to the Legal Year Opening 2025-
+<span class="small">(Please note: Name of your spouse need not be entered)</span> </p>
+                
+                <div id="nominees" class="mb-3"></div>
+                <button type="button" id="addNominee" class="btn btn-link">+ Add Nominee</button>
+            </div>
+            <div class="col-12 mt-4">
+                <h3 class="h5">PART C - Transport Arrangements</h3>
+                <div class="mb-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="useArrangedTransport" name="useArrangedTransport">
+                        <label class="form-check-label" for="useArrangedTransport">I shall use the arranged transport</label>
+                    </div>
+                    <div id="fromOptions" class="ms-4 mt-2 d-none">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="transport.fromOpt" value="High Court Building" id="fromHighCourt">
+                            <label class="form-check-label" for="fromHighCourt">From the High Court Building to the City Hall at 3:15 p.m.</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="transport.fromOpt" value="District Court" id="fromDistrictCourt">
+                            <label class="form-check-label" for="fromDistrictCourt">From the District Court to the City Hall at 3:00 p.m.</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="transport.fromOpt" value="West Kowloon Law Courts Building" id="fromWestKowloon">
+                            <label class="form-check-label" for="fromWestKowloon">From the West Kowloon Law Courts Building to the City Hall at 2:45 p.m.</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="mb-3 mt-4">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="useReturnTransport" name="useReturnTransport">
+                        <label class="form-check-label" for="useReturnTransport">After the ceremony, I shall use the arranged transport running at 15-minute intervals between 6:00 p.m. - 8:00 p.m.</label>
+                    </div>
+                    <div id="awayOptions" class="ms-4 mt-2 d-none">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="transport.awayOpt" value="High Court Building" id="toHighCourt">
+                            <label class="form-check-label" for="toHighCourt">From the City Hall back to the High Court Building</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="transport.awayOpt" value="West Kowloon via District Court" id="toWestKowloon">
+                            <label class="form-check-label" for="toWestKowloon">From the City Hall to the West Kowloon Law Courts Building enroute to District Court</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="useOwnCar" name="useOwnCar">
+                        <label class="form-check-label" for="useOwnCar">My driver will drive me to the City Hall. My car registration number is</label>
+                    </div>
+                    <div class="row align-items-center mt-2 ms-4">
+                        <div class="col-12">
+                            <input type="text" class="form-control" id="carRegistrationNo" name="transport.carRegistrationNo" disabled>
+                        </div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="ownArrangement" name="transport.ownArrangement" value="Y">
+                        <label class="form-check-label" for="ownArrangement">I shall make my own arrangement</label>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <div class="row align-items-center">
+                        <div class="col-4">
+                            <label for="remarks" class="form-label mb-0">Remarks (if any)</label>
+                        </div>
+                        <div class="col-8">
+                            <textarea class="form-control" id="remarks" name="transport.remarks"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12" style="text-align:center">
+                <button type="button" class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#confirmModal" style="max-width:150px">Submit RSVP</button>
+            </div>
+             <div class="col-12">
+             <hr />
+                <h3 class="h5">Note</h3>
+                <ol class="small">
+                    <li>To facilitate the smooth running of the ceremony, you are kindly requested to arrive at the City Hall by 3:45 p.m. the latest.</li>
+                    <li>Please keep a copy of the completed form for your own record.</li>
+                    <li>For enquiries, please contact the following as appropriate or email to <a href="mailto:legalyearopening@judiciary.hk">legalyearopening@judiciary.hk</a>.
+                        <p class="mt-2">Attendance and personal guest invitation:</p>
+                        <p>Ms Esther Tsang (Tel: 2867 2200), <br />Mr Chan Tsz Fung (Tel: 2867 2723)</p>
+                        <p>Transport arrangements:</p>
+                        <p>Ms Jenny Tsoi (Tel: 2867 3064), <br />Mr Chris Ho (Tel: 2867 2727)</p>
+                    </li>
+                    <li>For any last minute changes to the transport arrangements, please inform the High Court General Registry, Judiciary at 2867 2698/2402/2403. These telephone lines will be manned until 6:00 p.m. on the event day.</li>
+                </ol>
+            </div>
+            
+  
+                        <input type="text" class="form-control" id="rsvpLink" name="rsvpLink" value="https://rsvp.com/2025/sc23ordvfa02rkkf0qwacbs_JUDEKI00010" required>
+         
+        </form>
+    </div>
+    
+ <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="confirmModalLabel">Confirm Submission</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    Are you sure you want to submit your RSVP?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="confirmSubmit">Submit</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script th:src="@{/js/bootstrap.bundle.min.js}"></script>
+ <script>    
+ // Extract rsvplink from URL
+ const urlParams = new URLSearchParams(window.location.search);
+ const rsvpLinkValue = urlParams.get('rvsplink') || '';
+ document.getElementById('rsvpLink').value = `https://${rsvpLinkValue}`;
+ 
+ 
+        document.getElementById('addNominee').addEventListener('click', () => {
+            const nomineesDiv = document.getElementById('nominees');
+            if (nomineesDiv.children.length >= 3) {
+                alert('Maximum of 3 nominees allowed.');
+                return;
+            }
+            const index = nomineesDiv.children.length;
+            const nomineeDiv = document.createElement('div');
+            nomineeDiv.className = 'nominee mb-3';
+            nomineeDiv.innerHTML = `
+                <div class="row align-items-center">
+                    <div class="col-4">
+                        <label for="nominee${index + 1}_email" class="form-label mb-0" style="float:right">Nominee ${index + 1} Email</label>
+                    </div>
+                    <div class="col-8">
+                        <input type="email" class="form-control" name="nominations[${index}].emailAddr" required>
+                    </div>
+                </div>
+                <div class="row align-items-center mt-2">
+                    <div class="col-4">
+                        <label for="nominee${index + 1}_name" class="form-label mb-0"  style="float:right">Nominee ${index + 1} Name</label>
+                    </div>
+                    <div class="col-8">
+                        <input type="text" class="form-control" name="nominations[${index}].name" required>
+                    </div>
+                </div>
+            `;
+            nomineesDiv.appendChild(nomineeDiv);
+        });
+
+        const useArrangedTransport = document.getElementById('useArrangedTransport');
+        const fromOptions = document.getElementById('fromOptions');
+        const useReturnTransport = document.getElementById('useReturnTransport');
+        const awayOptions = document.getElementById('awayOptions');
+        const useOwnCar = document.getElementById('useOwnCar');
+        const carRegistrationNo = document.getElementById('carRegistrationNo');
+        const ownArrangement = document.getElementById('ownArrangement');
+        const attendWithSpouse = document.getElementById('attendWithSpouse');
+
+        useArrangedTransport.addEventListener('change', () => {
+            fromOptions.classList.toggle('d-none', !useArrangedTransport.checked);
+            if (!useArrangedTransport.checked) {
+                fromOptions.querySelectorAll('input').forEach(input => input.checked = false);
+            }
+            ownArrangement.checked = false;
+        });
+
+        useReturnTransport.addEventListener('change', () => {
+            awayOptions.classList.toggle('d-none', !useReturnTransport.checked);
+            if (!useReturnTransport.checked) {
+                awayOptions.querySelectorAll('input').forEach(input => input.checked = false);
+            }
+            ownArrangement.checked = false;
+        });
+
+        useOwnCar.addEventListener('change', () => {
+            carRegistrationNo.disabled = !useOwnCar.checked;
+            if (!useOwnCar.checked) {
+                carRegistrationNo.value = '';
+            }
+            ownArrangement.checked = false;
+        });
+
+        ownArrangement.addEventListener('change', () => {
+            if (ownArrangement.checked) {
+                useArrangedTransport.checked = false;
+                useReturnTransport.checked = false;
+                useOwnCar.checked = false;
+                fromOptions.classList.add('d-none');
+                awayOptions.classList.add('d-none');
+                carRegistrationNo.disabled = true;
+                carRegistrationNo.value = '';
+                fromOptions.querySelectorAll('input').forEach(input => input.checked = false);
+                awayOptions.querySelectorAll('input').forEach(input => input.checked = false);
+            }
+        });
+
+        attendWithSpouse.addEventListener('change', () => {
+            document.getElementById('spouseInd').value = attendWithSpouse.checked ? 'Y' : 'N';
+        });
+
+        document.getElementById('confirmSubmit').addEventListener('click', async () => {
+        //document.getElementById('rsvpForm').addEventListener('submit', async (e) => {
+            //e.preventDefault();
+            //const formData = new FormData(e.target);
+            const formData = new FormData(document.getElementById('rsvpForm'));
+            const data = {
+                rsvpLink: formData.get('rsvpLink'),
+                attendInd: formData.get('attendInd'),
+                emailAddr: formData.get('emailAddr'),
+                telNo: formData.get('telNo'),
+                spouseInd: formData.get('attendInd') === 'Y' && document.getElementById('attendWithSpouse').checked ? 'Y' : 'N',
+                nominations: [],
+               
+            };
+            const hasTransport = useArrangedTransport.checked || useReturnTransport.checked || useOwnCar.checked || ownArrangement.checked;
+            if (hasTransport) {
+                data.transport = {
+                    awayOpt: formData.get('transport.awayOpt') || '',
+                    carRegistrationNo: formData.get('transport.carRegistrationNo') || '',
+                    fromOpt: formData.get('transport.fromOpt') || '',
+                    postAddress: '',
+                    remarks: formData.get('transport.remarks') || '',
+                    ownArrangement: formData.get('transport.ownArrangement') || 'N'
+                };
+            }
+            	
+
+            const nominees = document.querySelectorAll('.nominee');
+            for (let index = 0; index < nominees.length; index++) {
+                const email = formData.get(`nominations[${index}].emailAddr`);
+                const name = formData.get(`nominations[${index}].name`);
+                if (email && name) {
+                    data.nominations.push({ emailAddr: email, name });
+                } else {
+                    alert('Please fill in both email and name for all nominees.');
+                    return;
+                }
+            }
+
+            try {
+                const response = await fetch('/api/public/reply/create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                if (response.ok) {
+                    window.location.href = 'thank-you';
+                } else {
+                    const result = await response.text();
+                    alert(result);
+                }
+            } catch (error) {
+                alert('Error submitting RSVP: ' + error.message);
+            }
+        });
+    </script>
+</body>
+</html>

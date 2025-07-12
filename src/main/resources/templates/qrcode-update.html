@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+	xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+<meta charset="UTF-8">
+<title>Update QR Code</title>
+<link th:href="@{/css/bootstrap.min.css}" rel="stylesheet">
+<link th:href="@{/css/bootstrap-icons.css}" rel="stylesheet">
+
+<style>
+.navbar-light .navbar-nav .nav-link.active {
+	font-weight: bold;
+	color: #007bff !important;
+	background-color: #e7f1ff !important;
+	border-radius: 0.25rem;
+	padding: 0.5rem 1rem;
+}
+
+.navbar-light .navbar-nav .nav-link:hover {
+	color: #0056b3 !important;
+}
+
+.navbar-light .navbar-nav .nav-link {
+	transition: color 0.2s, background-color 0.2s;
+}
+</style>
+</head>
+<body>
+<div class="container mt-0">
+		<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+	<h2>Update QR Code</h2>
+	<form th:object="${qrcode}"
+	
+		th:action="@{/admin/qrcodes/update/{id}(id=${qrcode.id})}"
+		method="post"
+		class="mt-4" >
+		<div class="mb-3">
+			<label for="qrCode" class="form-label">QR Code:</label> <input type="text"  class="form-control"
+				th:field="*{qrCode}" id="qrCode" required>
+		</div>
+		<div class="mb-3"> 
+			<label for="qrCode2" class="form-label">QR Code 2:</label> <input type="text"  class="form-control" 
+				th:field="*{qrCode2}" id="qrCode2">
+		</div>
+		<div class="mb-3">
+			<label for="activeInd" class="form-label">Active:</label> <select class="form-control"
+				th:field="*{activeInd}" id="activeInd">
+				<option value="Y">Yes</option>
+				<option value="N">No</option>
+			</select>
+		</div>
+		<button type="submit" class="btn btn-primary">Update</button>
+		<a th:href="@{/admin/qrcodes/detail/{id}(id=${qrcode.id})}" class="btn btn-secondary">Cancel</a>
+	</form>
+	
+	</div>
+</body>
+</html>

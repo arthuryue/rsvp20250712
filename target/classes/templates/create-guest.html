@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>Create Guest</title>
+<link th:href="@{/css/bootstrap.min.css}" rel="stylesheet">
+
+</head>
+<body>
+	<div class="container mt-0">
+		<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+		<h2>Create Guest</h2>
+		<form id="editGuestForm" th:action="@{/admin/guests/create}"
+			th:object="${guestCreateDto}" method="post" class="mt-4" novalidate>
+			<div class="mb-3">
+				<label for="name" class="form-label">Name</label> <input type="text"
+					class="form-control" id="name" th:field="*{name}" required>
+				<div class="invalid-feedback">Name is required.</div>
+				<div th:if="${#fields.hasErrors('name')}" class="text-danger"
+					th:errors="*{name}"></div>
+			</div>
+			<div class="mb-3">
+				<label for="name" class="form-label">Title</label> 
+					    <input type="text" class="form-control" id="titleInput" name="title" th:field="*{title}">
+
+            <div th:if="${#fields.hasErrors('title')}" class="text-danger" th:errors="*{title}"></div>
+            <!-- select
+					class="form-select" id="title" th:field="*{title}" >
+					<option value="">Select s</option>
+
+					<option value="Mr">Mr</option>
+					<option value="Mrs">Mrs</option>
+					<option value="Miss">Miss</option>
+					<option value="Ms">Ms</option>
+					<option value="Mr&Mrs">Mr & Mrs</option>
+				</select> -->
+			</div>
+			<div class="mb-3">
+				<label for="emailAddr" class="form-label">Email Address</label> <input
+					type="email" class="form-control" id="emailAddr"
+					th:field="*{emailAddr}">
+				<div class="invalid-feedback">Please enter a valid email
+					address.</div>
+				<div th:if="${#fields.hasErrors('emailAddr')}" class="text-danger"
+					th:errors="*{emailAddr}"></div>
+			</div>
+			<div class="mb-3">
+				<label for="organization" class="form-label">Organization</label> <input
+					type="text" class="form-control" id="organization"
+					th:field="*{organization}">
+				<div th:if="${#fields.hasErrors('organization')}"
+					class="text-danger" th:errors="*{organization}"></div>
+			</div>
+
+			<div class="mb-3">
+				<label for="type" class="form-label"> Type</label> <select
+					class="form-select" id="type" th:field="*{type}" required>
+					<option value=""></option>
+					<option th:each="type : ${T(hk.jud.app.lyo.entity.enums.GuestType).values()}"
+        th:value="${type.getValue()}"
+         th:text="${type.getLabel()}"
+        th:selected="${type == type.getValue()}">
+</option>
+
+
+				</select>
+				<div class="invalid-feedback">Please select an RSVP type.</div>
+				<div th:if="${#fields.hasErrors('type')}" class="text-danger"
+					th:errors="*{type}"></div>
+			</div>
+			<!-- div class="mb-3">
+				<label for="guestCode" class="form-label">Guest Code</label> <input
+					type="text" class="form-control" id="guestCode"
+					th:field="*{guestCode}" >
+				<div class="invalid-feedback">Guest code is required.</div>
+				<div th:if="${#fields.hasErrors('guestCode')}" class="text-danger"
+					th:errors="*{guestCode}"></div>
+			</div>-->
+			<button type="submit" class="btn btn-primary">Create Guest</button>
+			<a th:href="@{/admin/guests}" class="btn btn-secondary">Cancel</a>
+		</form>
+	</div>
+	<script th:src="@{/js/bootstrap.bundle.min.js}"></script>
+<script>
+    // Enable Bootstrap custom validation styles
+    (function () {
+        'use strict';
+        const form = document.getElementById('editGuestForm');
+        form.addEventListener('submit', function (event) {
+            let isValid = true;
+            const inputs = form.querySelectorAll('input, select');
+            
+            // Reset previous validation states
+            inputs.forEach(input => {
+                input.classList.remove('is-invalid');
+                const feedback = input.nextElementSibling;
+                if (feedback && feedback.classList.contains('invalid-feedback')) {
+                    feedback.style.display = 'none';
+                }
+            });
+
+            // Validate name
+            const name = document.getElementById('name');
+            if (!name.value.trim()) {
+                name.classList.add('is-invalid');
+                name.nextElementSibling.style.display = 'block';
+                isValid = false;
+            }
+
+            // Validate emailAddr
+            const emailAddr = document.getElementById('emailAddr');
+            if (emailAddr.value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailAddr.value)) {
+                emailAddr.classList.add('is-invalid');
+                emailAddr.nextElementSibling.style.display = 'block';
+                isValid = false;
+            }
+
+            // Validate type
+            const type = document.getElementById('type');
+            if (!type.value) {
+            	type.classList.add('is-invalid');
+                type.nextElementSibling.style.display = 'block';
+                isValid = false;
+            }
+
+            // Validate guestCode
+            const guestCode = document.getElementById('guestCode');
+            if (!guestCode.value.trim()) {
+                guestCode.classList.add('is-invalid');
+                guestCode.nextElementSibling.style.display = 'block';
+                isValid = false;
+            }
+
+            if (!isValid) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+
+            form.classList.add('was-validated');
+        }, false);
+
+        // Real-time validation on input
+        form.querySelectorAll('input, select').forEach(input => {
+            input.addEventListener('input', function () {
+                const feedback = input.nextElementSibling;
+                if (feedback && feedback.classList.contains('invalid-feedback')) {
+                    if (input.id === 'name' && input.value.trim()) {
+                        input.classList.remove('is-invalid');
+                        feedback.style.display = 'none';
+                    } else if (input.id === 'emailAddr' && (!input.value || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input.value))) {
+                        input.classList.remove('is-invalid');
+                        feedback.style.display = 'none';
+                    } else if (input.id === 'type' && input.value) {
+                        input.classList.remove('is-invalid');
+                        feedback.style.display = 'none';
+                    } else if (input.id === 'guestCode' && input.value.trim()) {
+                        input.classList.remove('is-invalid');
+                        feedback.style.display = 'none';
+                    }
+                }
+            });
+        });
+    })();
+</script>
+</body>
+</html>

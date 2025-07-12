@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>Event Details</title>
+<!-- Bootswatch Flatly Theme -->
+
+<link th:href="@{/css/bootstrap.min.css}" rel="stylesheet">
+<link th:href="@{/css/bootstrap-icons.css}" rel="stylesheet">
+
+<style>
+.navbar-light .navbar-nav .nav-link.active {
+	font-weight: bold;
+	color: #007bff !important;
+	background-color: #e7f1ff !important;
+	border-radius: 0.25rem;
+	padding: 0.5rem 1rem;
+}
+
+.navbar-light .navbar-nav .nav-link:hover {
+	color: #0056b3 !important;
+}
+
+.navbar-light .navbar-nav .nav-link {
+	transition: color 0.2s, background-color 0.2s;
+}
+
+.card {
+	margin-bottom: 1.5rem;
+}
+
+#guestSearchResults {
+	max-height: 200px;
+	overflow-y: auto;
+	position: absolute;
+	z-index: 1000;
+}
+
+#guestSearchResults a {
+	background: #fff;
+}
+
+.modal-fullscreen .modal-content {
+	padding: 1.5rem;
+}
+
+.modal-fullscreen .modal-body {
+	/*max-width: 800px;*/
+	/*margin: 0 auto;*/
+}
+
+.modal-header {
+	background-color: #2c3e50;
+	color: #fff;
+	border-bottom: 1px solid #34495e;
+}
+
+.modal-header .btn-close {
+	filter: invert(1); /* White close button */
+}
+
+.invited-badge {
+	font-size: 0.75rem;
+	margin-left: 0.5rem;
+	vertical-align: middle;
+	float: right;
+	color: #fff !important
+}
+
+.toggle-details {
+	cursor: pointer;
+	color: #007bff;
+	text-decoration: none;
+}
+
+.toggle-details:hover {
+	color: #0056b3;
+}
+
+.collapse {
+	transition: height 0s ease;
+}
+
+.collapsing {
+	transition: height 0s ease;
+}
+
+.filter-container {
+	display: flex;
+	align-items: center;
+	gap: 1rem;
+	margin-bottom: 1rem;
+}
+
+.filter-container .form-select {
+	width: 250px;
+}
+
+.invitation-search {
+	max-width: 300px;
+	margin-bottom: 1rem;
+}
+
+.input-group .btn-clear {
+	cursor: pointer;
+}
+</style>
+</head>
+<body>
+	<div class="container mt-0">
+		<div th:replace="~{fragments/navbar :: navbar}"></div>
+		<h2>Event Details</h2>
+
+		<!-- Event Details -->
+		<div class="card">
+			<div
+				class="card-header d-flex justify-content-between align-items-center">
+				<h5 class="card-title mb-0" th:text="${event.eventName}"></h5>
+				<a href="#eventDetails" class="toggle-details"
+					data-bs-toggle="collapse" id="toggleDetails"> <span
+					id="toggleText">Show Details</span> <i
+					class="bi bi-chevron-down ms-1" id="toggleIcon"></i>
+				</a>
+			</div>
+			<div id="eventDetails" class="card-body collapse">
+				<p>
+					<strong>Status:</strong> <span th:text="${event.status}"></span>
+				</p>
+				<p>
+					<strong>Last Updated By:</strong> <span
+						th:text="${event.lastUpdateId}"></span>
+				</p>
+				<p>
+					<strong>Last Updated:</strong> <span
+						th:text="${#temporals.format(event.lastUpdateTime, 'yyyy-MM-dd HH:mm')}"></span>
+				</p>
+			</div>
+		</div>
+
+		<!-- Invitations -->
+
+		<div class="d-flex justify-content-between align-items-center mb-0">
+			<h2>Invitations</h2>
+
+
+		</div>
+		<div class="d-flex justify-content-between align-items-center mb-3">
+			<div class="filter-container">
+				<div class="input-group invitation-search mb-0">
+					<input type="text" class="form-control" id="invitationSearch"
+						placeholder="Search by name or email"
+						th:value="${searchQuery}" style="width: 250px">
+					<button class="btn btn-outline-secondary btn-clear" type="button"
+						id="clearSearch">
+						<i class="bi bi-x"></i>
+					</button>
+				</div>
+				<select class="form-select" id="guestTypeFilter">
+					<option value="all" th:selected="${guestTypeFilter == 'All'}">All
+						Guest Types</option>
+
+					<option
+						th:each="guestType : ${T(hk.jud.app.lyo.entity.enums.GuestType).values()}"
+						th:if="${guestType.isShowInOption()}"
+						th:value="${guestType.getValue()}"
+						th:text="${guestType.getLabel()}"
+						th:selected="${guestTypeFilter == guestType.getValue()}">
+					</option>
+
+
+
+				</select> <select class="form-select status-filter" id="statusFilter">
+
+
+					<option value="All" th:selected="${statusFilter == 'All'}">All
+						Statuses</option>
+
+					<option
+						th:each="status : ${T(hk.jud.app.lyo.entity.enums.InvitationStatus).values()}"
+						th:value="${status.getValue()}"
+						th:text="${#strings.capitalize(status.getValue().toLowerCase())}"
+						th:selected="${statusFilter == status.getValue()}"></option>
+
+
+
+
+				</select>
+
+				<button class="btn btn-outline-secondary" id="clearFilter">Clear</button>
+
+			</div>
+			<button type="button" class="btn btn-primary mb-3"
+				data-bs-toggle="modal" data-bs-target="#createInvitationModal">Create
+				Invitation</button>
+		</div>
+		<!-- Invitation Table -->
+		<table class="table table-striped">
+			<thead>
+				<tr>
+					<!-- <th><a
+						th:href="@{/admin/events/detail/{id}(id=${event.id}, sort=${sortField == 'guest.guestCode' and sortDirection == 'asc' ? 'guest.guestCode,desc' : 'guest.guestCode,asc'}, page=${currentPage}, size=${pageSize}, statusFilter=${statusFilter},guestTypeFilter=${guestTypeFilter}, search=${searchQuery})}">
+							Code</a> <span
+						th:if="${sortField == 'guest.guestCode' and sortDirection == 'asc'}"
+						class="bi bi-arrow-up"></span> <span
+						th:if="${sortField == 'guest.guestCode' and sortDirection == 'desc'}"
+						class="bi bi-arrow-down"></span></th>-->
+
+					<th><a
+						th:href="@{/admin/events/detail/{id}(id=${event.id}, sort=${sortField == 'guest.name' and sortDirection == 'asc' ? 'guest.name,desc' : 'guest.name,asc'}, page=${currentPage}, size=${pageSize}, statusFilter=${statusFilter},guestTypeFilter=${guestTypeFilter}, search=${searchQuery})}">
+							Name</a> <span
+						th:if="${sortField == 'guest.name' and sortDirection == 'asc'}"
+						class="bi bi-arrow-up"></span> <span
+						th:if="${sortField == 'guest.name' and sortDirection == 'desc'}"
+						class="bi bi-arrow-down"></span></th></th>
+					<th>Guest Email</th>
+					<th>Type</th>
+					<th>Status</th>
+					<th><a
+						th:href="@{/admin/events/detail/{id}(id=${event.id}, sort=${sortField == 'lastUpdateTime' and sortDirection == 'asc' ? 'lastUpdateTime,desc' : 'lastUpdateTime,asc'}, page=${currentPage}, size=${pageSize}, statusFilter=${statusFilter},guestTypeFilter=${guestTypeFilter}, search=${searchQuery})}">Last
+							Updated</a> <span
+						th:if="${sortField == 'lastUpdateTime' and sortDirection == 'asc'}"
+						class="bi bi-arrow-up"></span> <span
+						th:if="${sortField == 'lastUpdateTime' and sortDirection == 'desc'}"
+						class="bi bi-arrow-down"></span></th>
+					<th>Actions</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr th:each="invitation : ${invitations}">
+					<!-- td th:text="${invitation.guest.guestCode}"></td> -->
+					<td th:text="${invitation.guest.name}"></td>
+					<td th:text="${invitation.guest.emailAddr}"></td>
+					<td><span th:with="guestType=${invitation.guest.type}">
+							<span th:text="${guestType.label}"></span>
+					</span></td>
+					<td><span th:with="status=${invitation.status}"> <span
+							th:class="'badge ' + ${status.badgeClass}"
+							th:text="${status.label}"></span>
+					</span></td>
+					<td
+						th:text="${#temporals.format(invitation.lastUpdateTime, 'yyyy-MM-dd HH:mm')}"></td>
+					<td><a
+						th:href="@{/admin/events/invitation/detail/{id}(id=${invitation.id})}"
+						class="btn btn-sm btn-primary">Details</a></td>
+				</tr>
+				<tr th:if="${invitations.empty}">
+					<td colspan="7" class="text-center">No invitations found.</td>
+				</tr>
+			</tbody>
+		</table>
+
+		<!-- Pagination -->
+		<!-- Record Count: Always Visible -->
+		<div
+			class="d-flex justify-content-between align-items-center flex-wrap mb-3">
+
+			<nav aria-label="Page navigation"
+				th:classappend="${totalPages <= 1} ? 'invisible' : ''">
+				<ul class="pagination justify-content-center">
+					<li class="page-item"
+						th:classappend="${currentPage == 0 ? 'disabled' : ''}"><a
+						class="page-link"
+						th:href="@{/admin/events/detail/{id}(id=${event.id}, page=${currentPage - 1}, size=${pageSize}, sort=${sortField + ',' + sortDirection}, statusFilter=${statusFilter},guestTypeFilter=${guestTypeFilter}, search=${searchQuery})}">Previous</a>
+					</li>
+					<li class="page-item"
+						th:each="pageNum : ${#numbers.sequence(0, totalPages - 1)}"
+						th:classappend="${pageNum == currentPage ? 'active' : ''}"><a
+						class="page-link"
+						th:href="@{/admin/events/detail/{id}(id=${event.id}, page=${pageNum}, size=${pageSize}, sort=${sortField + ',' + sortDirection}, statusFilter=${statusFilter},guestTypeFilter=${guestTypeFilter}, search=${searchQuery})}"
+						th:text="${pageNum + 1}"></a></li>
+					<li class="page-item"
+						th:classappend="${currentPage == totalPages - 1 ? 'disabled' : ''}">
+						<a class="page-link"
+						th:href="@{/admin/events/detail/{id}(id=${event.id}, page=${currentPage + 1}, size=${pageSize}, sort=${sortField + ',' + sortDirection},statusFilter=${statusFilter},guestTypeFilter=${guestTypeFilter}, search=${searchQuery})}">Next</a>
+					</li>
+
+				</ul>
+
+
+			</nav>
+
+			<!-- Record Count -->
+			<div>
+				Count: <span th:text="${invitationCount}"></span>
+			</div>
+		</div>
+		<!-- Create Invitation Modal -->
+		<div class="modal fade" id="createInvitationModal" tabindex="-1"
+			aria-labelledby="createInvitationModalLabel" aria-hidden="true">
+			<div class="modal-dialog modal-fullscreen">
+				<div class="modal-content">
+					<div class="modal-header">
+						<h5 class="modal-title" id="createInvitationModalLabel">Create
+							New Invitation</h5>
+						<button type="button" class="btn-close" data-bs-dismiss="modal"
+							aria-label="Close"></button>
+					</div>
+					<div class="modal-body">
+						<form id="createInvitationForm"
+							th:action="@{/admin/events/detail/{id}/invitation(id=${event.id})}"
+							method="post">
+							<input type="hidden" th:name="${_csrf.parameterName}"
+								th:value="${_csrf.token}" />
+
+							<div class="mb-3">
+								<label for="guestSearch" class="form-label">Search
+									Guests</label> <input type="text" class="form-control guest-search"
+									id="guestSearch" placeholder="Search by name or email">
+							</div>
+							<div class="guest-table">
+								<table class="table table-striped">
+									<thead>
+										<tr>
+											<th>Select</th>
+											<!-- <th>Code</th> -->
+											<th>Name</th>
+											<th>Email</th>
+											<th>Type</th>
+											<th></th>
+										</tr>
+									</thead>
+									<tbody id="guestTableBody">
+										<tr th:each="guest : ${guests}">
+											<td><input type="radio" name="guestId"
+												th:value="${guest.id}" class="guest-checkbox" /></td>
+											<!-- td th:text="${guest.guestCode}"></td> -->
+											<td th:text="${guest.name}"></td>
+											<td th:text="${guest.emailAddr}"></td>
+											<td><span th:with="guestType=${guest.type}"> <span
+													th:text="${guestType.label}"></span>
+											</span></td>
+											<td></td>
+										</tr>
+										<tr th:if="${guests.empty}">
+											<td colspan="6" class="text-center">No available guests
+												found.</td>
+										</tr>
+									</tbody>
+								</table>
+							</div>
+
+							<button type="submit" class="btn btn-primary">Create</button>
+						</form>
+					</div>
+				</div>
+			</div>
+		</div>
+
+	</div>
+	<script>
+	// CSRF token for AJAX
+    const csrfToken = document.querySelector('input[name="_csrf"]').value;
+    // Current query parameters
+    const currentPage = /*[[${currentPage}]]*/ 0;
+    const pageSize = [[${pageSize}]] ;
+    const sortField = /*[[${sortField}]]*/ 'lastUpdateTime';
+    const sortDirection = /*[[${sortDirection}]]*/ 'asc';
+    const currentStatus = /*[[${statusFilter}]]*/ 'All';
+    const currentGuestType = /*[[${guestTypeFilter}]]*/ 'All';
+	 // Event ID
+    const eventId = [[${event.id}]];
+    const eventDetailDefault = '/admin/events/detail/[[${event.id}]]';
+ 
+ // Initial invited guest IDs
+const invitedGuestIds = new Set(/*[[${invitedGuestIds}]]*/ []);
+    // Debounce function to limit API calls
+    function debounce(func, wait) {
+        let timeout;
+        return function (...args) {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(this, args), wait);
+        };
+    }
+	// Handle search input
+    document.getElementById('guestSearch').addEventListener('input', function(e) {
+        const query = e.target.value.trim();
+        searchGuests(query);
+    });
+	
+ // Search guests via API
+    const searchGuests = debounce(function(query) {
+    	fetch(`/admin/invitation/guests/search?q=${encodeURIComponent(query)}&eventId=${eventId}`, {
+    	
+             headers: {
+                 'Accept': 'application/json',
+                 'X-CSRF-TOKEN': document.querySelector('input[name="_csrf"]').value
+             }
+         })
+       
+        .then(response => response.json())
+        .then(guests => {
+            const tbody = document.getElementById('guestTableBody');
+            tbody.innerHTML = '';
+            if (guests.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center">No guests found.</td></tr>';
+                return;
+            }
+            const badge = document.createElement('span');
+            badge.className = 'badge bg-warning text-dark invited-badge';
+            badge.textContent = 'Invited';
+
+            guests.forEach(guest => {
+                //const isInvited = invitedGuestIds.has(guest.id);
+                const row = `
+                    <tr>
+                        <td>
+                        <input type="radio" name="guestId" value="${guest.id}" class="guest-checkbox" ${false ? 'disabled' : ''}/></td>
+                        <!--<td>${guest.guestCode}</td>-->
+                        <td>${guest.name}</td>
+                        <td>${guest.emailAddr}</td>
+                        <td>${guest.typeLabel}</td>
+                        <td>${guest.invited ? '<span class="badge bg-warning text-dark invited-badge">Invited</span>' : ''}
+                        
+                        </td>
+                    </tr>
+                `;
+                tbody.insertAdjacentHTML('beforeend', row);
+            });
+        })
+        .catch(error => {
+            console.error('Error fetching guests:', error);
+            document.getElementById('guestTableBody').innerHTML = '<tr><td colspan="4" class="text-center">Error loading guests.</td></tr>';
+        });
+    }, 300);
+ 
+    document.getElementById('createInvitationForm').addEventListener('submit', function(e) {
+        const checkboxes = document.querySelectorAll('.guest-checkbox:checked');
+        if (checkboxes.length === 0) {
+            e.preventDefault();
+            alert('Please select at least one guest.');
+        }
+    });
+    
+    // Handle collapse toggle text using Bootstrap events
+    const eventDetails = document.getElementById('eventDetails');
+    const toggleDetails = document.getElementById('toggleText');
+    eventDetails.addEventListener('show.bs.collapse', function() {
+        toggleDetails.textContent = 'Hide Details';
+        document.getElementById('toggleIcon').className = 'bi bi-chevron-up ms-1';
+    });
+    eventDetails.addEventListener('hidden.bs.collapse', function() {
+        toggleDetails.textContent = 'Show Details';
+        document.getElementById('toggleIcon').className = 'bi bi-chevron-down ms-1';
+    });
+    
+   
+    // Handle status filter change
+    document.getElementById('statusFilter').addEventListener('change', function(e) {
+        const status = e.target.value;
+        const url = new URL(window.location);
+        url.pathname = `/admin/events/detail/${eventId}`;
+        url.searchParams.set('page', currentPage);
+        url.searchParams.set('size', pageSize);
+        url.searchParams.set('sort', `${sortField},desc`);
+        if (status !== 'All') {
+            url.searchParams.set('statusFilter', status);
+        } else {
+            url.searchParams.delete('statusFilter');
+        }
+        window.location = url.toString();
+    });
+    // Handle status filter change
+    document.getElementById('guestTypeFilter').addEventListener('change', function(e) {
+        const status = e.target.value;
+        const url = new URL(window.location);
+        url.pathname = `/admin/events/detail/${eventId}`;
+        url.searchParams.set('page', currentPage);
+        url.searchParams.set('size', pageSize);
+        url.searchParams.set('sort', `${sortField},desc`);
+        if (status !== 'All') {
+            url.searchParams.set('guestTypeFilter', status);
+        } else {
+            url.searchParams.delete('guestTypeFilter	');
+        }
+        window.location = url.toString();
+    });
+    
+    
+ // Handle invitation search
+    const invitationSearch = document.getElementById('invitationSearch');
+    const debouncedSearch = debounce(function() {
+        const search = invitationSearch.value.trim();
+        const url = new URL(window.location);
+        url.pathname = `/admin/events/detail/${eventId}`;
+        url.searchParams.set('page', 0); // Reset to first page
+        url.searchParams.set('size', pageSize);
+        url.searchParams.set('sort', `${sortField},${sortDirection}`);
+        if (currentStatus !== 'All') {
+            url.searchParams.set('statusFilter', currentStatus);
+        } else {
+            url.searchParams.delete('statusFilter');
+        }
+        if (search) {
+            url.searchParams.set('search', search);
+        } else {
+            url.searchParams.delete('search');
+        }
+        window.location = url.toString();
+    }, 500);
+
+    invitationSearch.addEventListener('input', debouncedSearch);
+
+    // Handle clear search
+    document.getElementById('clearSearch').addEventListener('click', function() {
+    	
+    	window.location = eventDetailDefault.toString();
+    });
+    document.getElementById('clearFilter').addEventListener('click', function() {
+
+    	window.location = eventDetailDefault.toString();
+    });
+</script>
+	<script th:src="@{/js/bootstrap.bundle.min.js}"></script>
+</body>
+</html>

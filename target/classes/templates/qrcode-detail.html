@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title>QR Code Detail</title>
+    <link th:href="@{/css/bootstrap.min.css}" rel="stylesheet">
+    <link th:href="@{/css/bootstrap-icons.css}" rel="stylesheet">
+	    <style>
+        .navbar-light .navbar-nav .nav-link.active {
+            font-weight: bold;
+            color: #007bff !important;
+            background-color: #e7f1ff !important;
+            border-radius: 0.25rem;
+            padding: 0.5rem 1rem;
+        }
+        .navbar-light .navbar-nav .nav-link:hover {
+            color: #0056b3 !important;
+        }
+        .navbar-light .navbar-nav .nav-link {
+            transition: color 0.2s, background-color 0.2s;
+        }
+    </style>
+</head>
+<body>
+<div class="container mt-0">
+		<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+    <h2>QR Code Detail</h2>
+    
+    
+    <div th:if="${param.success}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <span th:text="${#strings.replace(param.success, '+', ' ') == 'QR Code updated' ? 'QR Code updated successfully' : 'Operation completed successfully'}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    <div th:if="${param.error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <span th:text="${param.error}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    
+    
+      <div th:if="${qrcode != null}">
+        <table class="table table-bordered">
+            <tbody>
+                <tr>
+                    <th scope="row">QR Code</th>
+                    <td th:text="${qrcode.qrCode}"></td>
+                </tr>
+                <tr>
+                    <th scope="row">QR Code 2</th>
+                    <td th:text="${qrcode.qrCode2} ?: 'N/A'"></td>
+                </tr>
+                <tr>
+                    <th scope="row">Guest</th>
+                    <td th:text="${qrcode.guest?.name} ?: 'N/A'"></td>
+                </tr>
+                <tr>
+                    <th scope="row">Event</th>
+                    <td th:text="${qrcode.event?.eventName} ?: 'N/A'"></td>
+                </tr>
+                <tr>
+                    <th scope="row">Active</th>
+                    <td th:text="${qrcode.activeInd}"></td>
+                </tr>
+                <tr>
+                    <th scope="row">Last Updated</th>
+                    <td th:text="${#temporals.format(qrcode.lastUpdateTime, 'yyyy-MM-dd HH:mm')}"></td>
+                </tr>
+                <tr>
+                    <th scope="row">Last Updated By</th>
+                    <td th:text="${qrcode.lastUpdateId}"></td>
+                </tr>
+            </tbody>
+        </table>
+        
+          <a th:href="@{/admin/qrcodes/update/{id}(id=${qrcode.id})}" class="btn btn-primary">Update</a>
+        <a th:href="@{/admin/qrcodes}">Back to List</a>
+    </div>
+    
+        
+      
+
+   
+    
+    </div>
+</body>
+</html>
